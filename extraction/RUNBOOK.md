@@ -128,6 +128,8 @@ Derived edge kinds:
 |-----------|---------|
 | `state_write_read_candidate` | Same symbolic field has a write fact before a read fact in the same bitcode unit. This is a state-coupling candidate, not a final implicit dependency. |
 | `lifecycle_candidate` | Alloc/free facts appear in the same function and order. This requires later object identity refinement before becoming a dependency edge. |
+| `object_identity_candidate` | Same function, same bitcode unit, same symbolic object prefix, and same `base_object_json`. This is not a final identity equivalence. |
+| `explicit_dependency_candidate` | Lifecycle candidate promoted to a producer-consumer style candidate, currently limited to alloc-before-free. |
 
 ## Entry Points
 

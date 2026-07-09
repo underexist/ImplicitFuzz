@@ -67,6 +67,8 @@ def main() -> int:
     access_nodes = summary.get("nodes", {}).get("access", 0)
     state_edges = summary.get("edges", {}).get("state_write_read_candidate", 0)
     lifecycle_edges = summary.get("edges", {}).get("lifecycle_candidate", 0)
+    identity_edges = summary.get("edges", {}).get("object_identity_candidate", 0)
+    explicit_edges = summary.get("edges", {}).get("explicit_dependency_candidate", 0)
 
     if access_nodes < 700:
         raise SystemExit(f"expected at least 700 access nodes, got {access_nodes}")
@@ -74,6 +76,10 @@ def main() -> int:
         raise SystemExit("expected at least one state_write_read_candidate edge")
     if lifecycle_edges < 1:
         raise SystemExit("expected at least one lifecycle_candidate edge")
+    if identity_edges < 1:
+        raise SystemExit("expected at least one object_identity_candidate edge")
+    if explicit_edges < 1:
+        raise SystemExit("expected at least one explicit_dependency_candidate edge")
 
     print(f"phase2a evidence graph smoke OK: {args.db}")
     return 0
