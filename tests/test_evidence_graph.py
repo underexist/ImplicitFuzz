@@ -1,10 +1,14 @@
 import sqlite3
 
 from implicitfuzz.evidence.graph import (
+    _object_scope_from_base_json,
+    _symbolic_object_prefix,
     build_evidence_graph,
     create_evidence_tables,
     derive_access_nodes,
+    derive_explicit_dependency_edges,
     derive_lifecycle_edges,
+    derive_object_identity_edges,
     derive_state_flow_edges,
     summarize_evidence_graph,
 )
@@ -38,6 +42,7 @@ def _create_access_fact_table(conn):
           field_type TEXT,
           numeric_kind TEXT NOT NULL,
           access_path_numeric TEXT,
+          base_object_json TEXT NOT NULL DEFAULT '{"object_scope":"synthetic","value":"minimal_stub"}',
           primary_provenance TEXT NOT NULL,
           confidence TEXT NOT NULL,
           summary_detail_json TEXT,
@@ -58,6 +63,7 @@ def _insert_access(
     field_type="int",
     numeric_kind="gep_offsets",
     numeric="[0,0]",
+    base_object='{"object_scope":"synthetic","value":"minimal_stub"}',
     provenance="dwarf",
     confidence="high",
     summary_detail=None,
@@ -67,8 +73,8 @@ def _insert_access(
         INSERT INTO access_fact (
           bc_unit, function, semantic_op, access_kind,
           access_path_symbolic, field_type, numeric_kind, access_path_numeric,
-          primary_provenance, confidence, summary_detail_json, source_location_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          base_object_json, primary_provenance, confidence, summary_detail_json, source_location_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             bc_unit,
@@ -79,6 +85,7 @@ def _insert_access(
             field_type,
             numeric_kind,
             numeric,
+            base_object,
             provenance,
             confidence,
             summary_detail,
@@ -86,6 +93,20 @@ def _insert_access(
         ),
     )
     return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
+def test_symbolic_object_prefix_extracts_struct_prefix():
+    assert _symbolic_object_prefix("io_kiocb.flags") == "io_kiocb"
+    assert _symbolic_object_prefix("Node.next") == "Node"
+    assert _symbolic_object_prefix(None) is None
+    assert _symbolic_object_prefix("whole_object") is None
+
+
+def test_object_scope_from_base_json_handles_valid_and_invalid_json():
+    assert _object_scope_from_base_json('{"object_scope":"synthetic","value":"minimal_stub"}') == "synthetic"
+    assert _object_scope_from_base_json('{"object_scope":"allocation_site","value":"alloc:1"}') == "allocation_site"
+    assert _object_scope_from_base_json(None) == "unknown"
+    assert _object_scope_from_base_json("{bad json") == "unknown"
 
 
 def test_derive_access_nodes_creates_one_node_per_access_fact():
@@ -216,12 +237,106 @@ def test_derive_lifecycle_edges_links_alloc_to_free_in_same_function():
     )
 
 
+def test_derive_object_identity_edges_links_same_function_and_symbolic_object_prefix():
+    conn = sqlite3.connect(":memory:")
+    _create_access_fact_table(conn)
+    create_evidence_tables(conn)
+
+    left_id = _insert_access(conn, function="fn", semantic_op="write", symbolic="Node.value")
+    right_id = _insert_access(conn, function="fn", semantic_op="read", symbolic="Node.next")
+    _insert_access(conn, function="other_fn", semantic_op="read", symbolic="Node.next")
+    _insert_access(conn, function="fn", semantic_op="read", symbolic="Other.value")
+    derive_access_nodes(conn)
+
+    inserted = derive_object_identity_edges(conn)
+
+    assert inserted == 1
+    row = conn.execute(
+        """
+        SELECT edge_kind, source_fact_id, target_fact_id, basis, confidence, detail_json
+        FROM evidence_edge
+        WHERE edge_kind = 'object_identity_candidate'
+        """
+    ).fetchone()
+    assert tuple(row[0:5]) == (
+        "object_identity_candidate",
+        left_id,
+        right_id,
+        "same_function_symbolic_object_prefix",
+        "low",
+    )
+    assert '"object_prefix": "Node"' in row[5]
+    assert '"object_scope": "synthetic"' in row[5]
+
+
+def test_derive_object_identity_edges_ignores_numeric_only_accesses():
+    conn = sqlite3.connect(":memory:")
+    _create_access_fact_table(conn)
+    create_evidence_tables(conn)
+
+    _insert_access(conn, function="fn", semantic_op="write", symbolic=None, numeric_kind="whole_object", numeric="[]")
+    _insert_access(conn, function="fn", semantic_op="read", symbolic=None, numeric_kind="whole_object", numeric="[]")
+    derive_access_nodes(conn)
+
+    inserted = derive_object_identity_edges(conn)
+
+    assert inserted == 0
+
+
+def test_derive_explicit_dependency_edges_promotes_lifecycle_candidates():
+    conn = sqlite3.connect(":memory:")
+    _create_access_fact_table(conn)
+    create_evidence_tables(conn)
+
+    alloc_id = _insert_access(
+        conn,
+        function="io_provide_buffers",
+        semantic_op="alloc",
+        access_kind="call_alloc",
+        symbolic=None,
+        numeric_kind="unknown",
+        numeric=None,
+        provenance="summary",
+    )
+    free_id = _insert_access(
+        conn,
+        function="io_provide_buffers",
+        semantic_op="free",
+        access_kind="call_free",
+        symbolic=None,
+        numeric_kind="unknown",
+        numeric=None,
+        provenance="summary",
+    )
+    derive_access_nodes(conn)
+    derive_lifecycle_edges(conn)
+
+    inserted = derive_explicit_dependency_edges(conn)
+
+    assert inserted == 1
+    row = conn.execute(
+        """
+        SELECT edge_kind, source_fact_id, target_fact_id, basis, confidence, detail_json
+        FROM evidence_edge
+        WHERE edge_kind = 'explicit_dependency_candidate'
+        """
+    ).fetchone()
+    assert tuple(row[0:5]) == (
+        "explicit_dependency_candidate",
+        alloc_id,
+        free_id,
+        "lifecycle_alloc_before_free_candidate",
+        "high",
+    )
+    assert '"dependency_kind": "alloc_before_free"' in row[5]
+
+
 def test_build_evidence_graph_returns_counts_and_summary():
     conn = sqlite3.connect(":memory:")
     _create_access_fact_table(conn)
 
-    _insert_access(conn, function="producer", semantic_op="write", symbolic="Node.value")
-    _insert_access(conn, function="consumer", semantic_op="read", symbolic="Node.value")
+    _insert_access(conn, function="fn", semantic_op="write", symbolic="Node.value")
+    _insert_access(conn, function="fn", semantic_op="read", symbolic="Node.value")
     _insert_access(
         conn,
         function="io_provide_buffers",
@@ -250,10 +365,14 @@ def test_build_evidence_graph_returns_counts_and_summary():
         "access_nodes": 4,
         "state_write_read_candidate_edges": 1,
         "lifecycle_candidate_edges": 1,
+        "object_identity_candidate_edges": 1,
+        "explicit_dependency_candidate_edges": 1,
     }
     assert summary["nodes"] == {"access": 4}
     assert summary["edges"] == {
+        "explicit_dependency_candidate": 1,
         "lifecycle_candidate": 1,
+        "object_identity_candidate": 1,
         "state_write_read_candidate": 1,
     }
 
@@ -262,8 +381,8 @@ def test_build_evidence_graph_is_idempotent():
     conn = sqlite3.connect(":memory:")
     _create_access_fact_table(conn)
 
-    _insert_access(conn, function="producer", semantic_op="write", symbolic="Node.value")
-    _insert_access(conn, function="consumer", semantic_op="read", symbolic="Node.value")
+    _insert_access(conn, function="fn", semantic_op="write", symbolic="Node.value")
+    _insert_access(conn, function="fn", semantic_op="read", symbolic="Node.value")
 
     first_counts = build_evidence_graph(conn)
     second_counts = build_evidence_graph(conn)
@@ -273,13 +392,20 @@ def test_build_evidence_graph_is_idempotent():
         "access_nodes": 2,
         "state_write_read_candidate_edges": 1,
         "lifecycle_candidate_edges": 0,
+        "object_identity_candidate_edges": 1,
+        "explicit_dependency_candidate_edges": 0,
     }
     assert second_counts == {
         "access_nodes": 0,
         "state_write_read_candidate_edges": 0,
         "lifecycle_candidate_edges": 0,
+        "object_identity_candidate_edges": 0,
+        "explicit_dependency_candidate_edges": 0,
     }
     assert summary == {
         "nodes": {"access": 2},
-        "edges": {"state_write_read_candidate": 1},
+        "edges": {
+            "object_identity_candidate": 1,
+            "state_write_read_candidate": 1,
+        },
     }

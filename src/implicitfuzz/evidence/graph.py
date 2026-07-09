@@ -67,6 +67,35 @@ def _inserted_since(conn: sqlite3.Connection, before: int) -> bool:
     return conn.total_changes > before
 
 
+def _symbolic_object_prefix(symbolic_path: str | None) -> str | None:
+    if not symbolic_path or "." not in symbolic_path:
+        return None
+    prefix, field = symbolic_path.rsplit(".", 1)
+    if not prefix or not field:
+        return None
+    return prefix
+
+
+def _object_scope_from_base_json(base_object_json: str | None) -> str:
+    if not base_object_json:
+        return "unknown"
+    try:
+        value = json.loads(base_object_json)
+    except json.JSONDecodeError:
+        return "unknown"
+    if isinstance(value, dict):
+        scope = value.get("object_scope")
+        if isinstance(scope, str) and scope:
+            return scope
+    return "unknown"
+
+
+def _identity_confidence_for_scope(scope: str) -> str:
+    if scope in {"allocation_site", "global"}:
+        return "medium"
+    return "low"
+
+
 def derive_access_nodes(conn: sqlite3.Connection) -> int:
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
@@ -238,15 +267,147 @@ def derive_lifecycle_edges(conn: sqlite3.Connection) -> int:
     return inserted
 
 
+def derive_object_identity_edges(conn: sqlite3.Connection) -> int:
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        """
+        SELECT
+          a.id AS left_fact_id,
+          b.id AS right_fact_id,
+          a.bc_unit AS bc_unit,
+          a.function AS function,
+          a.access_path_symbolic AS left_symbolic,
+          b.access_path_symbolic AS right_symbolic,
+          a.base_object_json AS left_base_object,
+          b.base_object_json AS right_base_object,
+          an.id AS left_node_id,
+          bn.id AS right_node_id
+        FROM access_fact AS a
+        JOIN access_fact AS b
+          ON a.bc_unit = b.bc_unit
+         AND a.function = b.function
+         AND a.base_object_json = b.base_object_json
+         AND a.id < b.id
+        JOIN evidence_node AS an
+          ON an.fact_type = 'access_fact'
+         AND an.fact_id = a.id
+        JOIN evidence_node AS bn
+          ON bn.fact_type = 'access_fact'
+         AND bn.fact_id = b.id
+        WHERE a.access_path_symbolic IS NOT NULL
+          AND b.access_path_symbolic IS NOT NULL
+        ORDER BY a.id, b.id
+        """
+    ).fetchall()
+
+    inserted = 0
+    for row in rows:
+        left_prefix = _symbolic_object_prefix(row["left_symbolic"])
+        right_prefix = _symbolic_object_prefix(row["right_symbolic"])
+        if not left_prefix or left_prefix != right_prefix:
+            continue
+        scope = _object_scope_from_base_json(row["left_base_object"])
+        confidence = _identity_confidence_for_scope(scope)
+        detail = {
+            "object_prefix": left_prefix,
+            "object_scope": scope,
+            "status": "candidate_not_identity_closure",
+        }
+        before = conn.total_changes
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO evidence_edge (
+              edge_kind, source_node_id, target_node_id,
+              source_fact_type, source_fact_id,
+              target_fact_type, target_fact_id,
+              basis, confidence, detail_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "object_identity_candidate",
+                row["left_node_id"],
+                row["right_node_id"],
+                "access_fact",
+                row["left_fact_id"],
+                "access_fact",
+                row["right_fact_id"],
+                "same_function_symbolic_object_prefix",
+                confidence,
+                json.dumps(detail, sort_keys=True),
+            ),
+        )
+        if _inserted_since(conn, before):
+            inserted += 1
+    conn.commit()
+    return inserted
+
+
+def derive_explicit_dependency_edges(conn: sqlite3.Connection) -> int:
+    conn.row_factory = sqlite3.Row
+    lifecycle_edges = conn.execute(
+        """
+        SELECT
+          source_node_id,
+          target_node_id,
+          source_fact_type,
+          source_fact_id,
+          target_fact_type,
+          target_fact_id,
+          confidence
+        FROM evidence_edge
+        WHERE edge_kind = 'lifecycle_candidate'
+        ORDER BY source_fact_id, target_fact_id
+        """
+    ).fetchall()
+
+    inserted = 0
+    for row in lifecycle_edges:
+        detail = {
+            "dependency_kind": "alloc_before_free",
+            "status": "candidate_requires_identity_refinement",
+        }
+        before = conn.total_changes
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO evidence_edge (
+              edge_kind, source_node_id, target_node_id,
+              source_fact_type, source_fact_id,
+              target_fact_type, target_fact_id,
+              basis, confidence, detail_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "explicit_dependency_candidate",
+                row["source_node_id"],
+                row["target_node_id"],
+                row["source_fact_type"],
+                row["source_fact_id"],
+                row["target_fact_type"],
+                row["target_fact_id"],
+                "lifecycle_alloc_before_free_candidate",
+                row["confidence"],
+                json.dumps(detail, sort_keys=True),
+            ),
+        )
+        if _inserted_since(conn, before):
+            inserted += 1
+    conn.commit()
+    return inserted
+
+
 def build_evidence_graph(conn: sqlite3.Connection) -> dict[str, int]:
     create_evidence_tables(conn)
     access_nodes = derive_access_nodes(conn)
     state_edges = derive_state_flow_edges(conn)
     lifecycle_edges = derive_lifecycle_edges(conn)
+    identity_edges = derive_object_identity_edges(conn)
+    explicit_dependency_edges = derive_explicit_dependency_edges(conn)
     return {
         "access_nodes": access_nodes,
         "state_write_read_candidate_edges": state_edges,
         "lifecycle_candidate_edges": lifecycle_edges,
+        "object_identity_candidate_edges": identity_edges,
+        "explicit_dependency_candidate_edges": explicit_dependency_edges,
     }
 
 
