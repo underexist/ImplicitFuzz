@@ -75,3 +75,7 @@ Phase 2A does not produce:
 - final dependency edges
 
 Those remain Phase 2B/2C work.
+
+## Phase 2B Extension
+
+Phase 2B extends this candidate graph with `object_identity_candidate` and `explicit_dependency_candidate` edges. See `docs/phase2b-evidence-identity.md`.

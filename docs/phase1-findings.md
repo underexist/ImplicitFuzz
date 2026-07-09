@@ -322,8 +322,8 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 10. **[done] Phase 1 final regression** — `run_phase1_regression.sh` all lines pass
 11. **[done] Phase 1 ingestion smoke** — `ingest_phase1_smoke.py` → `/tmp/phase1_facts.db`
 12. **[done] Phase 2A evidence graph seeds** — derive `evidence_node` and `evidence_edge` tables from `/tmp/phase1_facts.db`
-13. [next] object identity refinement / explicit dependency pairing over evidence graph
-14. [later] branch_fact / gate_seed_fact for target state gates
+13. **[done] Phase 2B identity/dependency candidates** — weak object identity and lifecycle explicit-dependency candidates over the evidence graph
+14. [next] branch_fact / gate_seed_fact for target state gates
 15. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
 16. [later] BTF in provenance / main recovery chain
 17. [later] container_of / list_entry
@@ -361,7 +361,7 @@ BTF:      match (or skipped with reason if runtime BTF unavailable)
 
 **Conclusion:** Phase 1 static extraction layer is ready for next-stage dependency graph ingestion (SQLite / evidence store). Ingestion smoke entry: `extraction/scripts/ingest_phase1_smoke.py` (see `extraction/RUNBOOK.md`).
 
-Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
+Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; Phase 2B identity/dependency candidates are tracked in `docs/phase2b-evidence-identity.md`. Smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
 
 ---
 
