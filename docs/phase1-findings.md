@@ -323,10 +323,12 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 11. **[done] Phase 1 ingestion smoke** — `ingest_phase1_smoke.py` → `/tmp/phase1_facts.db`
 12. **[done] Phase 2A evidence graph seeds** — derive `evidence_node` and `evidence_edge` tables from `/tmp/phase1_facts.db`
 13. **[done] Phase 2B identity/dependency candidates** — weak object identity and lifecycle explicit-dependency candidates over the evidence graph
-14. [next] branch_fact / gate_seed_fact for target state gates
-15. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
-16. [later] BTF in provenance / main recovery chain
-17. [later] container_of / list_entry
+14. **[done] Phase 2C tier-1 object identity refinement** — real `base_object` (global/formal_param/allocation_site) via direct GEP/local-slot resolution, replacing the synthetic stub; `object_identity_candidate` edges 642→517 with a real low/medium confidence split. See `docs/phase2c-object-identity-refinement.md`.
+15. [next] Phase 2C tier-2 object identity refinement — SVF Andersen points-to for indirect/loaded pointers (e.g. `req->ctx->x`) left `synthetic` by tier-1; emit `alias_fact` (`points_to_set`, `pta_kind=andersen`) and extend `derive_object_identity_edges` to link on points-to intersection
+16. [next] branch_fact / gate_seed_fact for target state gates
+17. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
+18. [later] BTF in provenance / main recovery chain
+19. [later] container_of / list_entry
 ```
 
 **Phase 1 complete.** Do not expand C++ extractor scope until ingestion validates fact consumption.
