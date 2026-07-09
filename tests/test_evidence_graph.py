@@ -9,6 +9,7 @@ from implicitfuzz.evidence.graph import (
     derive_explicit_dependency_edges,
     derive_lifecycle_edges,
     derive_object_identity_edges,
+    derive_pointsto_identity_edges,
     derive_state_flow_edges,
     summarize_evidence_graph,
 )
@@ -43,10 +44,25 @@ def _create_access_fact_table(conn):
           numeric_kind TEXT NOT NULL,
           access_path_numeric TEXT,
           base_object_json TEXT NOT NULL DEFAULT '{"object_scope":"synthetic","value":"minimal_stub"}',
+          instruction_id TEXT,
           primary_provenance TEXT NOT NULL,
           confidence TEXT NOT NULL,
           summary_detail_json TEXT,
           source_location_json TEXT
+        );
+        """
+    )
+
+
+def _create_alias_fact_table(conn):
+    conn.executescript(
+        """
+        CREATE TABLE alias_fact (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          object_id_json TEXT NOT NULL,
+          points_to_set_json TEXT NOT NULL,
+          relation_evidence TEXT NOT NULL,
+          pta_kind TEXT NOT NULL
         );
         """
     )
@@ -64,6 +80,7 @@ def _insert_access(
     numeric_kind="gep_offsets",
     numeric="[0,0]",
     base_object='{"object_scope":"synthetic","value":"minimal_stub"}',
+    instruction_id=None,
     provenance="dwarf",
     confidence="high",
     summary_detail=None,
@@ -73,8 +90,9 @@ def _insert_access(
         INSERT INTO access_fact (
           bc_unit, function, semantic_op, access_kind,
           access_path_symbolic, field_type, numeric_kind, access_path_numeric,
-          base_object_json, primary_provenance, confidence, summary_detail_json, source_location_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          base_object_json, instruction_id, primary_provenance, confidence,
+          summary_detail_json, source_location_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             bc_unit,
@@ -86,6 +104,7 @@ def _insert_access(
             numeric_kind,
             numeric,
             base_object,
+            instruction_id,
             provenance,
             confidence,
             summary_detail,
@@ -93,6 +112,23 @@ def _insert_access(
         ),
     )
     return conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+
+def _insert_alias(conn, *, relation_evidence, points_to_set, object_id=None, pta_kind="andersen"):
+    import json
+
+    conn.execute(
+        """
+        INSERT INTO alias_fact (object_id_json, points_to_set_json, relation_evidence, pta_kind)
+        VALUES (?, ?, ?, ?)
+        """,
+        (
+            json.dumps(object_id or {"object_scope": "synthetic", "value": "minimal_stub"}),
+            json.dumps(points_to_set),
+            relation_evidence,
+            pta_kind,
+        ),
+    )
 
 
 def test_symbolic_object_prefix_extracts_struct_prefix():
@@ -269,7 +305,12 @@ def test_derive_object_identity_edges_links_same_function_and_symbolic_object_pr
     assert '"object_scope": "synthetic"' in row[5]
 
 
-def test_derive_object_identity_edges_gives_medium_confidence_for_formal_param_scope():
+def test_derive_object_identity_edges_gives_low_confidence_for_formal_param_scope():
+    # v3 §5.6: formal_param is relational evidence only, not identity-grade
+    # on its own -- it must not be promoted to medium confidence without
+    # further refinement (see the pointsto-intersection rule, which is that
+    # refinement path). Regression guard against re-introducing the earlier
+    # overclaim.
     conn = sqlite3.connect(":memory:")
     _create_access_fact_table(conn)
     create_evidence_tables(conn)
@@ -293,8 +334,70 @@ def test_derive_object_identity_edges_gives_medium_confidence_for_formal_param_s
         WHERE edge_kind = 'object_identity_candidate'
         """
     ).fetchone()
-    assert tuple(row[0:3]) == (left_id, right_id, "medium")
+    assert tuple(row[0:3]) == (left_id, right_id, "low")
     assert '"object_scope": "formal_param"' in row[3]
+
+
+def test_derive_pointsto_identity_edges_links_facts_with_overlapping_points_to_sets():
+    conn = sqlite3.connect(":memory:")
+    _create_access_fact_table(conn)
+    _create_alias_fact_table(conn)
+    create_evidence_tables(conn)
+
+    left_id = _insert_access(
+        conn,
+        function="fn",
+        semantic_op="write",
+        symbolic="Node.value",
+        base_object='{"object_scope":"formal_param","value":"fn:0"}',
+        instruction_id="fn#1",
+    )
+    right_id = _insert_access(
+        conn,
+        function="other_fn",
+        semantic_op="read",
+        symbolic="Node.next",
+        base_object='{"object_scope":"synthetic","value":"minimal_stub"}',
+        instruction_id="other_fn#1",
+    )
+    # Same symbolic prefix but a disjoint points-to set: must not be linked.
+    _insert_access(
+        conn,
+        function="third_fn",
+        semantic_op="read",
+        symbolic="Node.value",
+        base_object='{"object_scope":"synthetic","value":"minimal_stub"}',
+        instruction_id="third_fn#1",
+    )
+    derive_access_nodes(conn)
+
+    _insert_alias(
+        conn,
+        relation_evidence="fn#1",
+        points_to_set=["allocation_site:a#addr1", "allocation_site:a#addr2"],
+    )
+    _insert_alias(
+        conn,
+        relation_evidence="other_fn#1",
+        points_to_set=["allocation_site:a#addr2", "global:g"],
+    )
+    _insert_alias(
+        conn, relation_evidence="third_fn#1", points_to_set=["allocation_site:zzz#addr9"]
+    )
+
+    inserted = derive_pointsto_identity_edges(conn)
+
+    assert inserted == 1
+    row = conn.execute(
+        """
+        SELECT source_fact_id, target_fact_id, basis, confidence, detail_json
+        FROM evidence_edge
+        WHERE edge_kind = 'object_identity_candidate'
+          AND basis = 'pointsto_intersection_andersen'
+        """
+    ).fetchone()
+    assert tuple(row[0:4]) == (left_id, right_id, "pointsto_intersection_andersen", "medium")
+    assert "allocation_site:a#addr2" in row[4]
 
 
 def test_derive_object_identity_edges_ignores_numeric_only_accesses():
@@ -394,6 +497,7 @@ def test_build_evidence_graph_returns_counts_and_summary():
         "state_write_read_candidate_edges": 1,
         "lifecycle_candidate_edges": 1,
         "object_identity_candidate_edges": 1,
+        "pointsto_identity_candidate_edges": 0,
         "explicit_dependency_candidate_edges": 1,
     }
     assert summary["nodes"] == {"access": 4}
@@ -421,6 +525,7 @@ def test_build_evidence_graph_is_idempotent():
         "state_write_read_candidate_edges": 1,
         "lifecycle_candidate_edges": 0,
         "object_identity_candidate_edges": 1,
+        "pointsto_identity_candidate_edges": 0,
         "explicit_dependency_candidate_edges": 0,
     }
     assert second_counts == {
@@ -428,6 +533,7 @@ def test_build_evidence_graph_is_idempotent():
         "state_write_read_candidate_edges": 0,
         "lifecycle_candidate_edges": 0,
         "object_identity_candidate_edges": 0,
+        "pointsto_identity_candidate_edges": 0,
         "explicit_dependency_candidate_edges": 0,
     }
     assert summary == {

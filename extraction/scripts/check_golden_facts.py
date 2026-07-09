@@ -214,33 +214,10 @@ def check_facts(facts: list[dict]) -> list[str]:
     ):
         errors.append("missing call_free fact from primitive summary")
 
-    # base_object (Phase 2C tier-1 direct resolution): formal parameter.
-    peek_value_fact = next(
-        (
-            f
-            for f in access_facts
-            if f.get("function") == "peek_value" and symbolic_path_of(f) == "Node.value"
-        ),
-        None,
-    )
-    if peek_value_fact is None:
-        errors.append('missing symbolic_path "Node.value" in function peek_value')
-    else:
-        base_object = peek_value_fact.get("base_object") or {}
-        if base_object.get("object_scope") != "formal_param":
-            errors.append(
-                "peek_value Node.value base_object.object_scope expected "
-                f"'formal_param', got {base_object.get('object_scope')!r}"
-            )
-        if base_object.get("value") != "peek_value:0":
-            errors.append(
-                "peek_value Node.value base_object.value expected "
-                f"'peek_value:0', got {base_object.get('value')!r}"
-            )
-
     # base_object: heap allocation site, consistent across all field accesses
-    # on the same local variable within a function.
-    def assert_consistent_allocation_site(function: str) -> None:
+    # on the same local variable within a function. Returns (scope, value) or
+    # None (and records an error) if the accesses in `function` don't agree.
+    def consistent_allocation_site(function: str) -> tuple[str, str] | None:
         scopes_and_values = {
             (
                 (fact.get("base_object") or {}).get("object_scope"),
@@ -252,27 +229,64 @@ def check_facts(facts: list[dict]) -> list[str]:
         }
         if not scopes_and_values:
             errors.append(f"no Node.* access_fact found in function {function}")
-            return
+            return None
         if len(scopes_and_values) != 1:
             errors.append(
                 f"{function}: expected one consistent base_object across Node.* "
                 f"accesses, got {scopes_and_values}"
             )
-            return
+            return None
         (scope, value) = next(iter(scopes_and_values))
         if scope != "allocation_site":
             errors.append(
                 f"{function}: Node.* base_object.object_scope expected "
                 f"'allocation_site', got {scope!r}"
             )
-        if not value or not value.startswith(f"{function}#addr"):
-            errors.append(
-                f"{function}: Node.* base_object.value expected to start with "
-                f"'{function}#addr', got {value!r}"
-            )
+            return None
+        return (scope, value)
 
-    assert_consistent_allocation_site("alloc_node")
-    assert_consistent_allocation_site("main")
+    # alloc_node: tier-1 resolves its own `n->...` directly to its malloc()
+    # call site. main: tier-1 resolves `b->...` to the immediate
+    # `alloc_node(2)` *call site* (a wrapper-call-site heuristic, call-site
+    # sensitive) -- these are two different, both-legitimate granularities,
+    # so main's value is intentionally NOT expected to match alloc_node's.
+    alloc_node_site = consistent_allocation_site("alloc_node")
+    main_site = consistent_allocation_site("main")
+    if alloc_node_site and not alloc_node_site[1].startswith("alloc_node#addr"):
+        errors.append(
+            f"alloc_node base_object.value expected to start with 'alloc_node#addr', "
+            f"got {alloc_node_site[1]!r}"
+        )
+    if main_site and not main_site[1].startswith("main#addr"):
+        errors.append(
+            f"main base_object.value expected to start with 'main#addr', got {main_site[1]!r}"
+        )
+    if main_site and alloc_node_site and main_site == alloc_node_site:
+        errors.append(
+            "main and alloc_node unexpectedly share one base_object value "
+            "(expected distinct wrapper-call-site vs malloc-call-site addressing)"
+        )
+
+    # accumulate's `head` and peek_value's `n` are formal parameters whose
+    # tier-1 resolution stays formal_param/synthetic (head: loop-reassigned,
+    # ambiguous single-store trace; peek_value: formal_param needs tier-2 to
+    # become identity-grade per v3 §5.6). Phase 2C tier-2 (SVF Andersen
+    # points-to) must refine *both* to the exact same allocation_site
+    # alloc_node's own internal accesses use -- proving real, non-synthetic,
+    # cross-function object identity via points-to rather than mere
+    # function-local grouping.
+    accumulate_site = consistent_allocation_site("accumulate")
+    peek_value_site = consistent_allocation_site("peek_value")
+    if alloc_node_site and accumulate_site and accumulate_site != alloc_node_site:
+        errors.append(
+            f"accumulate base_object {accumulate_site} expected to match "
+            f"alloc_node's {alloc_node_site} via tier-2 points-to refinement"
+        )
+    if alloc_node_site and peek_value_site and peek_value_site != alloc_node_site:
+        errors.append(
+            f"peek_value base_object {peek_value_site} expected to match "
+            f"alloc_node's {alloc_node_site} via tier-2 points-to refinement"
+        )
 
     return errors
 

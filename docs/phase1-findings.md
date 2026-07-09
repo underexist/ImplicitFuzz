@@ -323,12 +323,13 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 11. **[done] Phase 1 ingestion smoke** — `ingest_phase1_smoke.py` → `/tmp/phase1_facts.db`
 12. **[done] Phase 2A evidence graph seeds** — derive `evidence_node` and `evidence_edge` tables from `/tmp/phase1_facts.db`
 13. **[done] Phase 2B identity/dependency candidates** — weak object identity and lifecycle explicit-dependency candidates over the evidence graph
-14. **[done] Phase 2C tier-1 object identity refinement** — real `base_object` (global/formal_param/allocation_site) via direct GEP/local-slot resolution, replacing the synthetic stub; `object_identity_candidate` edges 642→517 with a real low/medium confidence split. See `docs/phase2c-object-identity-refinement.md`.
-15. [next] Phase 2C tier-2 object identity refinement — SVF Andersen points-to for indirect/loaded pointers (e.g. `req->ctx->x`) left `synthetic` by tier-1; emit `alias_fact` (`points_to_set`, `pta_kind=andersen`) and extend `derive_object_identity_edges` to link on points-to intersection
+14. **[done] Phase 2C tier-1 object identity refinement** — real `base_object` (global/formal_param/allocation_site) via direct GEP/local-slot resolution, replacing the synthetic stub.
+15. **[done] Phase 2C tier-2 object identity refinement** — SVF Andersen points-to refines `formal_param`/`synthetic` toward concrete allocation_site/global (per v3 §5.6, those two scopes are relational evidence only); emits `alias_fact` for genuinely ambiguous multi-object cases; new `derive_pointsto_identity_edges` links facts across function boundaries on points-to intersection. `object_identity_candidate`: 642→517 (`same_function_symbolic_object_prefix`) + 6 new (`pointsto_intersection_andersen`); confidence 489 low / 34 medium (corrected — `formal_param` alone does not grant medium). See `docs/phase2c-object-identity-refinement.md`.
 16. [next] branch_fact / gate_seed_fact for target state gates
 17. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
 18. [later] BTF in provenance / main recovery chain
 19. [later] container_of / list_entry
+20. [later] unify wrapper-call-site vs. Andersen points-to granularity (see phase2c doc's "Known, accepted limitation")
 ```
 
 **Phase 1 complete.** Do not expand C++ extractor scope until ingestion validates fact consumption.
@@ -363,7 +364,7 @@ BTF:      match (or skipped with reason if runtime BTF unavailable)
 
 **Conclusion:** Phase 1 static extraction layer is ready for next-stage dependency graph ingestion (SQLite / evidence store). Ingestion smoke entry: `extraction/scripts/ingest_phase1_smoke.py` (see `extraction/RUNBOOK.md`).
 
-Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; Phase 2B identity/dependency candidates are tracked in `docs/phase2b-evidence-identity.md`; Phase 2C tier-1 object identity refinement (real `base_object` resolution replacing the synthetic stub) is tracked in `docs/phase2c-object-identity-refinement.md`. Smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
+Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; Phase 2B identity/dependency candidates are tracked in `docs/phase2b-evidence-identity.md`; Phase 2C object identity refinement (tier-1 direct resolution + tier-2 SVF Andersen points-to, replacing the synthetic stub) is tracked in `docs/phase2c-object-identity-refinement.md`. Smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
 
 ---
 

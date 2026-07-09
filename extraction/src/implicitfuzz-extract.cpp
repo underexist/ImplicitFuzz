@@ -93,6 +93,10 @@ struct AccessPathInfo
     SchemaConfidence confidence;
     std::string baseObjectScope = "synthetic";
     std::string baseObjectValue = "minimal_stub";
+    bool hasAliasCandidate = false;
+    std::string aliasObjectScope;
+    std::string aliasObjectValue;
+    std::vector<std::string> pointsToLabels;
 };
 
 static std::string stringArrayJson(const std::vector<std::string>& values);
@@ -747,30 +751,18 @@ static const Value* traceUniqueStoreSlot(const LoadInst* load)
 // bottom out in something else (e.g. a value loaded from another object's
 // field, or a slot with more than one store) are left for a future SVF
 // points-to based tier and reported as synthetic here.
-static BaseObjectInfo resolveBaseObjectDirect(const Value* ptr,
-                                              const PrimitiveSummaryIndex& primitiveIndex,
-                                              const WrapperSummaryIndex& wrapperIndex)
+// Classifies a *root* value (already peeled of casts/GEPs/local-slot hops)
+// into a base_object. Shared by tier 1 (walks to this root itself) and tier
+// 2 (walks to this root via SVF's points-to target, reverse-mapped back to
+// an LLVM Value) so that the same underlying object always gets the same
+// label regardless of which tier found it -- otherwise accesses reached via
+// a direct root walk vs. via points-to on an indirect pointer would produce
+// different base_object strings for the same real object and silently fail
+// to group together downstream.
+static BaseObjectInfo classifyRootValue(const Value* cur,
+                                        const PrimitiveSummaryIndex& primitiveIndex,
+                                        const WrapperSummaryIndex& wrapperIndex)
 {
-    const Value* cur = ptr;
-    for (unsigned hop = 0; hop < kPointerTraceMaxDepth; ++hop)
-    {
-        cur = stripCastsOnly(cur);
-        if (const auto* gep = SVFUtil::dyn_cast<GEPOperator>(cur))
-        {
-            cur = gep->getPointerOperand();
-            continue;
-        }
-        if (const auto* load = SVFUtil::dyn_cast<LoadInst>(cur))
-        {
-            const Value* traced = traceUniqueStoreSlot(load);
-            if (traced != load)
-            {
-                cur = traced;
-                continue;
-            }
-        }
-        break;
-    }
     cur = stripCastsOnly(cur);
 
     if (const auto* gv = SVFUtil::dyn_cast<GlobalVariable>(cur))
@@ -802,6 +794,136 @@ static BaseObjectInfo resolveBaseObjectDirect(const Value* ptr,
     }
 
     return {"synthetic", "minimal_stub"};
+}
+
+static BaseObjectInfo resolveBaseObjectDirect(const Value* ptr,
+                                              const PrimitiveSummaryIndex& primitiveIndex,
+                                              const WrapperSummaryIndex& wrapperIndex)
+{
+    const Value* cur = ptr;
+    for (unsigned hop = 0; hop < kPointerTraceMaxDepth; ++hop)
+    {
+        cur = stripCastsOnly(cur);
+        if (const auto* gep = SVFUtil::dyn_cast<GEPOperator>(cur))
+        {
+            cur = gep->getPointerOperand();
+            continue;
+        }
+        if (const auto* load = SVFUtil::dyn_cast<LoadInst>(cur))
+        {
+            const Value* traced = traceUniqueStoreSlot(load);
+            if (traced != load)
+            {
+                cur = traced;
+                continue;
+            }
+        }
+        break;
+    }
+    return classifyRootValue(cur, primitiveIndex, wrapperIndex);
+}
+
+// Tier-2 base object resolution via SVF Andersen points-to. Only invoked when
+// tier 1 leaves a pointer as "formal_param" or "synthetic" -- per the v3
+// object_id design (docs/静态抽取层技术路线_v3.md §5.6), those two scopes are
+// relational evidence only and must be refined toward a concrete
+// allocation_site/global before they can support an identity claim.
+// GepObjVar points-to targets are reduced to their BaseObjVar: field
+// sensitivity does not matter for "same object" identity.
+static const BaseObjVar* reduceToBaseObjVar(const SVFVar* gnode)
+{
+    if (const auto* baseObj = SVFUtil::dyn_cast<BaseObjVar>(gnode))
+        return baseObj;
+    if (const auto* gepObj = SVFUtil::dyn_cast<GepObjVar>(gnode))
+        return gepObj->getBaseObj();
+    return nullptr;
+}
+
+// Prefer reverse-mapping the SVF object back to its LLVM Value and running it
+// through the same classifyRootValue tier-1 uses, so a heap/stack/global
+// object reached via points-to gets *the same* base_object string as when
+// tier 1 reaches it directly -- otherwise the two tiers would silently
+// disagree on the label for the same real object. Falls back to an
+// SVF-node-based label (still stable within this run, just not shared with
+// tier 1's addressing scheme) only when the reverse mapping is unavailable.
+static BaseObjectInfo svfObjectToBaseObject(const BaseObjVar& obj, LLVMModuleSet* llvmMS,
+                                            const PrimitiveSummaryIndex& primitiveIndex,
+                                            const WrapperSummaryIndex& wrapperIndex)
+{
+    if (const Value* llvmValue = llvmMS->getLLVMValue(&obj))
+    {
+        const BaseObjectInfo classified =
+            classifyRootValue(llvmValue, primitiveIndex, wrapperIndex);
+        if (classified.scope != "synthetic")
+            return classified;
+    }
+
+    if (obj.isGlobalObj())
+        return {"global", obj.getValueName()};
+    return {"allocation_site",
+            "svf_obj" + std::to_string(obj.getId()) + "@" + obj.getICFGNode()->getSourceLoc()};
+}
+
+// Self-describing "scope:value" label for alias_fact.points_to_set entries
+// (points_to_set is schema'd as a plain string array, no nested object).
+static std::string svfObjectLabel(const BaseObjVar& obj, LLVMModuleSet* llvmMS,
+                                  const PrimitiveSummaryIndex& primitiveIndex,
+                                  const WrapperSummaryIndex& wrapperIndex)
+{
+    const BaseObjectInfo info =
+        svfObjectToBaseObject(obj, llvmMS, primitiveIndex, wrapperIndex);
+    return info.scope + ":" + info.value;
+}
+
+struct PointsToResolution
+{
+    bool hasSingleConcreteObject = false;
+    BaseObjectInfo singleObject;
+    std::vector<std::string> concreteObjectLabels;
+};
+
+static PointsToResolution resolveBaseObjectViaPointsTo(const Value* ptr, Andersen* ander,
+                                                        SVFIR* pag, LLVMModuleSet* llvmMS,
+                                                        const PrimitiveSummaryIndex& primitiveIndex,
+                                                        const WrapperSummaryIndex& wrapperIndex)
+{
+    PointsToResolution result;
+    if (!ander || !pag || !llvmMS || !llvmMS->hasValueNode(ptr))
+        return result;
+
+    const NodeID nodeId = llvmMS->getValueNode(ptr);
+    const PointsTo& pts = ander->getPts(nodeId);
+
+    std::vector<const BaseObjVar*> concreteObjects;
+    for (NodeID objId : pts)
+    {
+        const SVFVar* gnode = pag->getGNode(objId);
+        const BaseObjVar* baseObj = reduceToBaseObjVar(gnode);
+        if (!baseObj)
+            continue;
+        if (baseObj->isBlackHoleObj())
+        {
+            // A blackhole target means "could be anything": not a useful
+            // identity signal, so treat the whole points-to set as unresolved.
+            return PointsToResolution{};
+        }
+        concreteObjects.push_back(baseObj);
+    }
+
+    if (concreteObjects.empty())
+        return result;
+
+    for (const BaseObjVar* obj : concreteObjects)
+        result.concreteObjectLabels.push_back(
+            svfObjectLabel(*obj, llvmMS, primitiveIndex, wrapperIndex));
+
+    if (concreteObjects.size() == 1)
+    {
+        result.hasSingleConcreteObject = true;
+        result.singleObject = svfObjectToBaseObject(*concreteObjects.front(), llvmMS,
+                                                     primitiveIndex, wrapperIndex);
+    }
+    return result;
 }
 
 class DwarfStructIndex
@@ -1349,7 +1471,10 @@ static AccessPathInfo buildAccessPathInfo(const Value* ptr,
                                           const Instruction& inst,
                                           const DwarfStructIndex& dwarfIndex,
                                           const PrimitiveSummaryIndex& primitiveIndex,
-                                          const WrapperSummaryIndex& wrapperIndex)
+                                          const WrapperSummaryIndex& wrapperIndex,
+                                          Andersen* ander,
+                                          SVFIR* pag,
+                                          LLVMModuleSet* llvmMS)
 {
     AccessPathInfo info;
     info.primaryProvenance = "numeric_fallback";
@@ -1360,6 +1485,27 @@ static AccessPathInfo buildAccessPathInfo(const Value* ptr,
         resolveBaseObjectDirect(ptr, primitiveIndex, wrapperIndex);
     info.baseObjectScope = baseObject.scope;
     info.baseObjectValue = baseObject.value;
+
+    // Tier 2: formal_param/synthetic are relational evidence only (v3 §5.6);
+    // try to refine them toward a concrete allocation_site/global via SVF
+    // Andersen points-to before falling back to leaving them as-is.
+    if (baseObject.scope == "formal_param" || baseObject.scope == "synthetic")
+    {
+        const PointsToResolution ptsResult = resolveBaseObjectViaPointsTo(
+            ptr, ander, pag, llvmMS, primitiveIndex, wrapperIndex);
+        if (ptsResult.hasSingleConcreteObject)
+        {
+            info.baseObjectScope = ptsResult.singleObject.scope;
+            info.baseObjectValue = ptsResult.singleObject.value;
+        }
+        else if (ptsResult.concreteObjectLabels.size() > 1)
+        {
+            info.hasAliasCandidate = true;
+            info.aliasObjectScope = baseObject.scope;
+            info.aliasObjectValue = baseObject.value;
+            info.pointsToLabels = ptsResult.concreteObjectLabels;
+        }
+    }
 
     const Value* resolvedPtr = [&]() -> const Value* {
         std::unordered_set<const Value*> visiting;
@@ -1606,6 +1752,32 @@ static void writeAccessFact(std::ofstream& out, const RunMetadata& runMeta,
     out << "}\n";
 }
 
+// Emitted alongside an access_fact when SVF Andersen points-to found more
+// than one concrete candidate object for a pointer whose direct (tier-1)
+// base_object stayed formal_param/synthetic. Records the full points-to set
+// as evidence for later identity closure (v3 §5.7: closure is computed by
+// the evidence store, not fully resolved here).
+static void writeAliasFact(std::ofstream& out, const RunMetadata& runMeta,
+                           const Function& func, const Instruction& inst,
+                           const std::string& objectScope, const std::string& objectValue,
+                           const std::vector<std::string>& pointsToSet,
+                           const std::string& relationEvidence)
+{
+    const std::string funcName = func.getName().str();
+    const SchemaConfidence confidence = schemaConfidenceFromScore(0.75);
+    const std::vector<std::string> provenance = {"svf"};
+
+    out << "{"
+        << "\"fact_type\":\"alias_fact\","
+        << commonEnvelopeJson(runMeta, funcName, inst, "svf", provenance, confidence) << ","
+        << "\"object_id\":{\"object_scope\":\"" << jsonEscape(objectScope)
+        << "\",\"value\":\"" << jsonEscape(objectValue) << "\"},"
+        << "\"points_to_set\":" << stringArrayJson(pointsToSet) << ","
+        << "\"relation_evidence\":\"" << jsonEscape(relationEvidence) << "\","
+        << "\"pta_kind\":\"andersen\""
+        << "}\n";
+}
+
 int main(int argc, char** argv)
 {
     std::vector<std::string> moduleNameVec =
@@ -1678,6 +1850,7 @@ int main(int argc, char** argv)
     uint64_t primitiveOtherFacts = 0;
     uint64_t wrapperAllocFacts = 0;
     uint64_t wrapperFreeFacts = 0;
+    uint64_t aliasFactCount = 0;
 
     WrapperSummaryIndex wrapperIndex;
     if (primitiveIndex.size() > 0)
@@ -1777,19 +1950,35 @@ int main(int argc, char** argv)
                     {
                         const AccessPathInfo accessPath =
                             buildAccessPathInfo(li->getPointerOperand(), inst, dwarfIndex,
-                                     primitiveIndex, wrapperIndex);
+                                     primitiveIndex, wrapperIndex, ander, pag, llvmMS);
                         writeAccessFact(out, runMeta, func, inst, ordinal, "read",
                                         "direct_load", accessPath, binding);
                         ++factCount;
+                        if (accessPath.hasAliasCandidate)
+                        {
+                            writeAliasFact(out, runMeta, func, inst, accessPath.aliasObjectScope,
+                                          accessPath.aliasObjectValue, accessPath.pointsToLabels,
+                                          instructionId(func, inst, ordinal));
+                            ++factCount;
+                            ++aliasFactCount;
+                        }
                     }
                     else if (const StoreInst* si = SVFUtil::dyn_cast<StoreInst>(&inst))
                     {
                         const AccessPathInfo accessPath =
                             buildAccessPathInfo(si->getPointerOperand(), inst, dwarfIndex,
-                                     primitiveIndex, wrapperIndex);
+                                     primitiveIndex, wrapperIndex, ander, pag, llvmMS);
                         writeAccessFact(out, runMeta, func, inst, ordinal, "write",
                                         "direct_store", accessPath, binding);
                         ++factCount;
+                        if (accessPath.hasAliasCandidate)
+                        {
+                            writeAliasFact(out, runMeta, func, inst, accessPath.aliasObjectScope,
+                                          accessPath.aliasObjectValue, accessPath.pointsToLabels,
+                                          instructionId(func, inst, ordinal));
+                            ++factCount;
+                            ++aliasFactCount;
+                        }
                     }
                 }
             }
@@ -1813,6 +2002,9 @@ int main(int argc, char** argv)
               << " other=" << primitiveOtherFacts << "\n";
     std::cout << "[implicitfuzz-extract] wrapper propagation hits: alloc="
               << wrapperAllocFacts << " free=" << wrapperFreeFacts << "\n";
+    std::cout << "[implicitfuzz-extract] alias_fact (andersen points-to, "
+                 "multi-object) hits: "
+              << aliasFactCount << "\n";
 
     delete vfg;
     AndersenWaveDiff::releaseAndersenWaveDiff();

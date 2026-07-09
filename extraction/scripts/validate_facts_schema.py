@@ -12,10 +12,12 @@ import jsonschema
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-FACT_SCHEMAS = {
-    "call_fact": "call_fact.schema.json",
-    "access_fact": "access_fact.schema.json",
-}
+# Fact types are discovered from extraction/schema/facts/*.schema.json rather
+# than hardcoded here, so that adding a new fact schema (e.g. alias_fact,
+# branch_fact, gate_seed_fact) doesn't also require remembering to update
+# this whitelist -- a real fact_type was previously rejected as "unsupported"
+# solely because this list predated its schema file.
+NON_FACT_SCHEMA_STEMS = {"common"}
 
 
 def build_registry(schema_dir: Path) -> Registry:
@@ -33,8 +35,11 @@ def build_registry(schema_dir: Path) -> Registry:
 def load_validators(schema_dir: Path) -> dict[str, Draft202012Validator]:
     registry = build_registry(schema_dir)
     validators: dict[str, Draft202012Validator] = {}
-    for fact_type, filename in FACT_SCHEMAS.items():
-        with (schema_dir / filename).open(encoding="utf-8") as handle:
+    for path in sorted(schema_dir.glob("*.schema.json")):
+        fact_type = path.name[: -len(".schema.json")]
+        if fact_type in NON_FACT_SCHEMA_STEMS:
+            continue
+        with path.open(encoding="utf-8") as handle:
             schema = json.load(handle)
         validators[fact_type] = Draft202012Validator(schema, registry=registry)
     return validators

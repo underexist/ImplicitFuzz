@@ -91,7 +91,12 @@ def _object_scope_from_base_json(base_object_json: str | None) -> str:
 
 
 def _identity_confidence_for_scope(scope: str) -> str:
-    if scope in {"allocation_site", "global", "formal_param"}:
+    # v3 §5.6: formal_param and synthetic are relational evidence only and
+    # must not be treated as identity-grade on their own -- they need to be
+    # refined toward a concrete allocation_site/global first (see Phase 2C
+    # tier-2 SVF points-to refinement, and the pointsto-intersection identity
+    # rule below, which is exactly that refinement path).
+    if scope in {"allocation_site", "global"}:
         return "medium"
     return "low"
 
@@ -342,6 +347,117 @@ def derive_object_identity_edges(conn: sqlite3.Connection) -> int:
     return inserted
 
 
+def derive_pointsto_identity_edges(conn: sqlite3.Connection) -> int:
+    """Identity candidates from real SVF Andersen points-to overlap.
+
+    Unlike derive_object_identity_edges (same function + literal base_object
+    match), this rule reads alias_fact.points_to_set (emitted by Phase 2C
+    tier-2 for pointers whose direct base_object stayed formal_param/
+    synthetic) and links any two access facts on the same symbolic object
+    prefix whose points-to sets intersect -- this is allowed to cross
+    function boundaries, since Andersen's points-to is whole-program, and is
+    exactly the "refine formal_param/synthetic via a real analysis" path
+    required by v3 §5.6 before such facts can support an identity claim.
+    """
+    conn.row_factory = sqlite3.Row
+    has_alias_fact_table = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'alias_fact'"
+    ).fetchone()
+    if not has_alias_fact_table:
+        return 0
+
+    alias_rows = conn.execute(
+        """
+        SELECT relation_evidence, points_to_set_json
+        FROM alias_fact
+        WHERE pta_kind = 'andersen'
+        """
+    ).fetchall()
+
+    points_to_by_instruction: dict[str, set[str]] = {}
+    for row in alias_rows:
+        try:
+            points_to = json.loads(row["points_to_set_json"])
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(points_to, list):
+            continue
+        points_to_by_instruction.setdefault(row["relation_evidence"], set()).update(points_to)
+
+    if not points_to_by_instruction:
+        return 0
+
+    instruction_ids = tuple(points_to_by_instruction.keys())
+    placeholders = ",".join("?" for _ in instruction_ids)
+    rows = conn.execute(
+        f"""
+        SELECT a.id AS fact_id, a.instruction_id AS instruction_id,
+               a.access_path_symbolic AS symbolic, an.id AS node_id
+        FROM access_fact AS a
+        JOIN evidence_node AS an
+          ON an.fact_type = 'access_fact'
+         AND an.fact_id = a.id
+        WHERE a.instruction_id IN ({placeholders})
+          AND a.access_path_symbolic IS NOT NULL
+        ORDER BY a.id
+        """,
+        instruction_ids,
+    ).fetchall()
+
+    candidates = [
+        (
+            row["fact_id"],
+            row["node_id"],
+            _symbolic_object_prefix(row["symbolic"]),
+            points_to_by_instruction[row["instruction_id"]],
+        )
+        for row in rows
+    ]
+
+    inserted = 0
+    for i, (left_id, left_node, left_prefix, left_pts) in enumerate(candidates):
+        if not left_prefix:
+            continue
+        for right_id, right_node, right_prefix, right_pts in candidates[i + 1 :]:
+            if left_prefix != right_prefix:
+                continue
+            shared = left_pts & right_pts
+            if not shared:
+                continue
+            detail = {
+                "object_prefix": left_prefix,
+                "shared_points_to": sorted(shared),
+                "status": "candidate_not_identity_closure",
+            }
+            before = conn.total_changes
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO evidence_edge (
+                  edge_kind, source_node_id, target_node_id,
+                  source_fact_type, source_fact_id,
+                  target_fact_type, target_fact_id,
+                  basis, confidence, detail_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    "object_identity_candidate",
+                    left_node,
+                    right_node,
+                    "access_fact",
+                    left_id,
+                    "access_fact",
+                    right_id,
+                    "pointsto_intersection_andersen",
+                    "medium",
+                    json.dumps(detail, sort_keys=True),
+                ),
+            )
+            if _inserted_since(conn, before):
+                inserted += 1
+    conn.commit()
+    return inserted
+
+
 def derive_explicit_dependency_edges(conn: sqlite3.Connection) -> int:
     conn.row_factory = sqlite3.Row
     lifecycle_edges = conn.execute(
@@ -401,12 +517,14 @@ def build_evidence_graph(conn: sqlite3.Connection) -> dict[str, int]:
     state_edges = derive_state_flow_edges(conn)
     lifecycle_edges = derive_lifecycle_edges(conn)
     identity_edges = derive_object_identity_edges(conn)
+    pointsto_identity_edges = derive_pointsto_identity_edges(conn)
     explicit_dependency_edges = derive_explicit_dependency_edges(conn)
     return {
         "access_nodes": access_nodes,
         "state_write_read_candidate_edges": state_edges,
         "lifecycle_candidate_edges": lifecycle_edges,
         "object_identity_candidate_edges": identity_edges,
+        "pointsto_identity_candidate_edges": pointsto_identity_edges,
         "explicit_dependency_candidate_edges": explicit_dependency_edges,
     }
 
