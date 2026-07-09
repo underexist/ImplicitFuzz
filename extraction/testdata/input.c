@@ -22,6 +22,11 @@ static void free_node(struct Node *n)
     free(n);
 }
 
+static int peek_value(struct Node *n)
+{
+    return n->value;
+}
+
 int accumulate(struct Node *head)
 {
     int sum = 0;
@@ -44,6 +49,7 @@ int main(void)
     b->name = "beta";
     b->flags = b->flags | 1UL;
     int sum = accumulate(b);
+    sum += peek_value(b);
     free_node(b);
     free_node(a);
     return sum;

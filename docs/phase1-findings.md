@@ -361,7 +361,7 @@ BTF:      match (or skipped with reason if runtime BTF unavailable)
 
 **Conclusion:** Phase 1 static extraction layer is ready for next-stage dependency graph ingestion (SQLite / evidence store). Ingestion smoke entry: `extraction/scripts/ingest_phase1_smoke.py` (see `extraction/RUNBOOK.md`).
 
-Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; Phase 2B identity/dependency candidates are tracked in `docs/phase2b-evidence-identity.md`. Smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
+Phase 2A evidence graph seeds are tracked in `docs/phase2a-evidence-graph.md`; Phase 2B identity/dependency candidates are tracked in `docs/phase2b-evidence-identity.md`; Phase 2C tier-1 object identity refinement (real `base_object` resolution replacing the synthetic stub) is tracked in `docs/phase2c-object-identity-refinement.md`. Smoke entry: `extraction/scripts/build_evidence_graph_smoke.py`.
 
 ---
 

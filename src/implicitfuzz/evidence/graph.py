@@ -91,7 +91,7 @@ def _object_scope_from_base_json(base_object_json: str | None) -> str:
 
 
 def _identity_confidence_for_scope(scope: str) -> str:
-    if scope in {"allocation_site", "global"}:
+    if scope in {"allocation_site", "global", "formal_param"}:
         return "medium"
     return "low"
 

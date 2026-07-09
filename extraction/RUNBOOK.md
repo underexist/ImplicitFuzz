@@ -432,6 +432,9 @@ Phase 1 measured results and conclusions:
 docs/phase1-findings.md
 docs/kernel-target-decision.md
 docs/confidence-model.md
+docs/phase2a-evidence-graph.md
+docs/phase2b-evidence-identity.md
+docs/phase2c-object-identity-refinement.md
 ```
 
 ## Upgrade Procedure

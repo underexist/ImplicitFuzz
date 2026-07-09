@@ -269,6 +269,34 @@ def test_derive_object_identity_edges_links_same_function_and_symbolic_object_pr
     assert '"object_scope": "synthetic"' in row[5]
 
 
+def test_derive_object_identity_edges_gives_medium_confidence_for_formal_param_scope():
+    conn = sqlite3.connect(":memory:")
+    _create_access_fact_table(conn)
+    create_evidence_tables(conn)
+
+    base_object = '{"object_scope":"formal_param","value":"fn:0"}'
+    left_id = _insert_access(
+        conn, function="fn", semantic_op="write", symbolic="Node.value", base_object=base_object
+    )
+    right_id = _insert_access(
+        conn, function="fn", semantic_op="read", symbolic="Node.next", base_object=base_object
+    )
+    derive_access_nodes(conn)
+
+    inserted = derive_object_identity_edges(conn)
+
+    assert inserted == 1
+    row = conn.execute(
+        """
+        SELECT source_fact_id, target_fact_id, confidence, detail_json
+        FROM evidence_edge
+        WHERE edge_kind = 'object_identity_candidate'
+        """
+    ).fetchone()
+    assert tuple(row[0:3]) == (left_id, right_id, "medium")
+    assert '"object_scope": "formal_param"' in row[3]
+
+
 def test_derive_object_identity_edges_ignores_numeric_only_accesses():
     conn = sqlite3.connect(":memory:")
     _create_access_fact_table(conn)

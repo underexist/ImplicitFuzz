@@ -91,6 +91,8 @@ struct AccessPathInfo
     std::string primaryProvenance;
     std::string accessPathRecovery;
     SchemaConfidence confidence;
+    std::string baseObjectScope = "synthetic";
+    std::string baseObjectValue = "minimal_stub";
 };
 
 static std::string stringArrayJson(const std::vector<std::string>& values);
@@ -697,6 +699,111 @@ private:
     std::unordered_map<std::string, FreeWrapperInfo> freeWrappers_;
 };
 
+static constexpr unsigned kPointerTraceMaxDepth = 8;
+
+struct BaseObjectInfo
+{
+    std::string scope = "synthetic";
+    std::string value = "minimal_stub";
+};
+
+static std::string addrBasedObjectId(const Function& func, const Value* value)
+{
+    std::ostringstream oss;
+    oss << func.getName().str() << "#addr" << reinterpret_cast<uintptr_t>(value);
+    return oss.str();
+}
+
+// Unlike traceLocalSlotValue (used for wrapper detection, where picking any
+// one store is an acceptable approximation), base object identity requires
+// an unambiguous slot: if a local variable's stack slot is written by more
+// than one store (e.g. a loop induction variable such as `head = head->next`),
+// the "value stored here" question does not have a single answer, so we
+// deliberately refuse to hop through it rather than pick an arbitrary one.
+static const Value* traceUniqueStoreSlot(const LoadInst* load)
+{
+    const auto* alloca = SVFUtil::dyn_cast<AllocaInst>(load->getPointerOperand());
+    if (!alloca)
+        return load;
+
+    const StoreInst* uniqueStore = nullptr;
+    for (const User* user : alloca->users())
+    {
+        const auto* store = SVFUtil::dyn_cast<StoreInst>(user);
+        if (!store || store->getPointerOperand() != alloca)
+            continue;
+        if (uniqueStore)
+            return load;
+        uniqueStore = store;
+    }
+    if (!uniqueStore)
+        return load;
+    return stripCastsOnly(uniqueStore->getValueOperand());
+}
+
+// Direct (tier-1) base object resolution: walk the pointer chain through GEPs
+// and unambiguous local-slot hops to a global, formal parameter, stack
+// allocation, or an allocation-primitive/wrapper call site. Pointers that
+// bottom out in something else (e.g. a value loaded from another object's
+// field, or a slot with more than one store) are left for a future SVF
+// points-to based tier and reported as synthetic here.
+static BaseObjectInfo resolveBaseObjectDirect(const Value* ptr,
+                                              const PrimitiveSummaryIndex& primitiveIndex,
+                                              const WrapperSummaryIndex& wrapperIndex)
+{
+    const Value* cur = ptr;
+    for (unsigned hop = 0; hop < kPointerTraceMaxDepth; ++hop)
+    {
+        cur = stripCastsOnly(cur);
+        if (const auto* gep = SVFUtil::dyn_cast<GEPOperator>(cur))
+        {
+            cur = gep->getPointerOperand();
+            continue;
+        }
+        if (const auto* load = SVFUtil::dyn_cast<LoadInst>(cur))
+        {
+            const Value* traced = traceUniqueStoreSlot(load);
+            if (traced != load)
+            {
+                cur = traced;
+                continue;
+            }
+        }
+        break;
+    }
+    cur = stripCastsOnly(cur);
+
+    if (const auto* gv = SVFUtil::dyn_cast<GlobalVariable>(cur))
+        return {"global", gv->getName().str()};
+
+    if (const auto* arg = SVFUtil::dyn_cast<Argument>(cur))
+    {
+        std::ostringstream oss;
+        oss << arg->getParent()->getName().str() << ":" << arg->getArgNo();
+        return {"formal_param", oss.str()};
+    }
+
+    if (const auto* alloca = SVFUtil::dyn_cast<AllocaInst>(cur))
+        return {"allocation_site", addrBasedObjectId(*alloca->getFunction(), alloca)};
+
+    if (const auto* call = SVFUtil::dyn_cast<CallBase>(cur))
+    {
+        const Function* callee = call->getCalledFunction();
+        if (callee)
+        {
+            const std::string calleeName = callee->getName().str();
+            if (isAllocPrimitiveCallee(primitiveIndex, calleeName) ||
+                wrapperIndex.isAllocWrapper(calleeName))
+            {
+                return {"allocation_site",
+                        addrBasedObjectId(*call->getFunction(), call)};
+            }
+        }
+    }
+
+    return {"synthetic", "minimal_stub"};
+}
+
 class DwarfStructIndex
 {
 public:
@@ -1060,7 +1167,6 @@ static std::string simplifiedFieldTypeName(const Type* type)
 static void collectGepSteps(const Value* ptr, std::vector<GepStepRaw>& steps);
 static const Value* resolvePointerToGep(const Value* value, unsigned depth,
                                         std::unordered_set<const Value*>& visiting);
-static constexpr unsigned kPointerTraceMaxDepth = 8;
 
 static bool mergeUniqueCandidate(const Value*& candidate, const Value* next)
 {
@@ -1241,12 +1347,19 @@ static bool resolveStructGepSymbolic(const GEPOperator* gep,
 
 static AccessPathInfo buildAccessPathInfo(const Value* ptr,
                                           const Instruction& inst,
-                                          const DwarfStructIndex& dwarfIndex)
+                                          const DwarfStructIndex& dwarfIndex,
+                                          const PrimitiveSummaryIndex& primitiveIndex,
+                                          const WrapperSummaryIndex& wrapperIndex)
 {
     AccessPathInfo info;
     info.primaryProvenance = "numeric_fallback";
     info.accessPathRecovery = "numeric_only";
     info.confidence = schemaConfidenceFromScore(0.9);
+
+    const BaseObjectInfo baseObject =
+        resolveBaseObjectDirect(ptr, primitiveIndex, wrapperIndex);
+    info.baseObjectScope = baseObject.scope;
+    info.baseObjectValue = baseObject.value;
 
     const Value* resolvedPtr = [&]() -> const Value* {
         std::unordered_set<const Value*> visiting;
@@ -1474,8 +1587,9 @@ static void writeAccessFact(std::ofstream& out, const RunMetadata& runMeta,
         << "\"icfg_node_id\":" << nullableNodeIdJson(binding.icfgNodeId) << ","
         << "\"semantic_op\":\"" << semanticOp << "\","
         << "\"access_kind\":\"" << accessKind << "\","
-        << "\"base_object\":{\"object_scope\":\"synthetic\",\"value\":\"minimal_stub\"},"
-        << "\"object_scope\":\"synthetic\","
+        << "\"base_object\":{\"object_scope\":\"" << jsonEscape(accessPath.baseObjectScope)
+        << "\",\"value\":\"" << jsonEscape(accessPath.baseObjectValue) << "\"},"
+        << "\"object_scope\":\"" << jsonEscape(accessPath.baseObjectScope) << "\","
         << "\"numeric_kind\":\"" << accessPath.numericKind << "\","
         << "\"access_path_symbolic\":" << nullableStringJson(accessPath.symbolicPath) << ","
         << "\"access_path_numeric\":"
@@ -1662,7 +1776,8 @@ int main(int argc, char** argv)
                     if (const LoadInst* li = SVFUtil::dyn_cast<LoadInst>(&inst))
                     {
                         const AccessPathInfo accessPath =
-                            buildAccessPathInfo(li->getPointerOperand(), inst, dwarfIndex);
+                            buildAccessPathInfo(li->getPointerOperand(), inst, dwarfIndex,
+                                     primitiveIndex, wrapperIndex);
                         writeAccessFact(out, runMeta, func, inst, ordinal, "read",
                                         "direct_load", accessPath, binding);
                         ++factCount;
@@ -1670,7 +1785,8 @@ int main(int argc, char** argv)
                     else if (const StoreInst* si = SVFUtil::dyn_cast<StoreInst>(&inst))
                     {
                         const AccessPathInfo accessPath =
-                            buildAccessPathInfo(si->getPointerOperand(), inst, dwarfIndex);
+                            buildAccessPathInfo(si->getPointerOperand(), inst, dwarfIndex,
+                                     primitiveIndex, wrapperIndex);
                         writeAccessFact(out, runMeta, func, inst, ordinal, "write",
                                         "direct_store", accessPath, binding);
                         ++factCount;

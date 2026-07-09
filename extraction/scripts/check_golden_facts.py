@@ -214,6 +214,66 @@ def check_facts(facts: list[dict]) -> list[str]:
     ):
         errors.append("missing call_free fact from primitive summary")
 
+    # base_object (Phase 2C tier-1 direct resolution): formal parameter.
+    peek_value_fact = next(
+        (
+            f
+            for f in access_facts
+            if f.get("function") == "peek_value" and symbolic_path_of(f) == "Node.value"
+        ),
+        None,
+    )
+    if peek_value_fact is None:
+        errors.append('missing symbolic_path "Node.value" in function peek_value')
+    else:
+        base_object = peek_value_fact.get("base_object") or {}
+        if base_object.get("object_scope") != "formal_param":
+            errors.append(
+                "peek_value Node.value base_object.object_scope expected "
+                f"'formal_param', got {base_object.get('object_scope')!r}"
+            )
+        if base_object.get("value") != "peek_value:0":
+            errors.append(
+                "peek_value Node.value base_object.value expected "
+                f"'peek_value:0', got {base_object.get('value')!r}"
+            )
+
+    # base_object: heap allocation site, consistent across all field accesses
+    # on the same local variable within a function.
+    def assert_consistent_allocation_site(function: str) -> None:
+        scopes_and_values = {
+            (
+                (fact.get("base_object") or {}).get("object_scope"),
+                (fact.get("base_object") or {}).get("value"),
+            )
+            for fact in access_facts
+            if fact.get("function") == function
+            and (symbolic_path_of(fact) or "").startswith("Node.")
+        }
+        if not scopes_and_values:
+            errors.append(f"no Node.* access_fact found in function {function}")
+            return
+        if len(scopes_and_values) != 1:
+            errors.append(
+                f"{function}: expected one consistent base_object across Node.* "
+                f"accesses, got {scopes_and_values}"
+            )
+            return
+        (scope, value) = next(iter(scopes_and_values))
+        if scope != "allocation_site":
+            errors.append(
+                f"{function}: Node.* base_object.object_scope expected "
+                f"'allocation_site', got {scope!r}"
+            )
+        if not value or not value.startswith(f"{function}#addr"):
+            errors.append(
+                f"{function}: Node.* base_object.value expected to start with "
+                f"'{function}#addr', got {value!r}"
+            )
+
+    assert_consistent_allocation_site("alloc_node")
+    assert_consistent_allocation_site("main")
+
     return errors
 
 
