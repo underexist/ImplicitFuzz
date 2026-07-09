@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8">
+<title>ImplicitFuzz Phase 2B Visuals</title>
+<style>body{font-family:Inter,Arial,sans-serif;margin:32px;background:#f8fafc;color:#0f172a} .card{margin:28px 0;padding:18px;background:white;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 2px #0001} img{max-width:100%;border:1px solid #e2e8f0;border-radius:8px} code{background:#e2e8f0;padding:2px 5px;border-radius:4px}</style>
+<h1>ImplicitFuzz Phase 2B 可视化</h1>
+<p>这些图用于组会讲解当前进度。注意：candidate edge 是候选证据，不是最终依赖结论。</p>
+<section class="card"><h2>总览：Phase 2B 节点/候选边数量</h2><p><code>00_phase2b_counts.svg</code></p><img src="00_phase2b_counts.svg" alt="总览：Phase 2B 节点/候选边数量"></section>
+<section class="card"><h2>路线：从 bitcode 到候选依赖图</h2><p><code>01_pipeline_overview.svg</code></p><img src="01_pipeline_overview.svg" alt="路线：从 bitcode 到候选依赖图"></section>
+<section class="card"><h2>局部图：io_provide_buffers alloc/free 显式依赖候选</h2><p><code>02_lifecycle_io_provide_buffers.svg</code></p><img src="02_lifecycle_io_provide_buffers.svg" alt="局部图：io_provide_buffers alloc/free 显式依赖候选"></section>
+<section class="card"><h2>局部图：io_timeout.off 写后读状态候选</h2><p><code>03_state_io_timeout_off.svg</code></p><img src="03_state_io_timeout_off.svg" alt="局部图：io_timeout.off 写后读状态候选"></section>
+<section class="card"><h2>局部图：io_kiocb 弱对象身份候选</h2><p><code>04_identity_io_kiocb.svg</code></p><img src="04_identity_io_kiocb.svg" alt="局部图：io_kiocb 弱对象身份候选"></section>
+</html>

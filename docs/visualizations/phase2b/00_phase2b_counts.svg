@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="520" viewBox="0 0 980 520">
+<rect width="980" height="520" fill="#f8fafc"/>
+<text x="28" y="36" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a" text-anchor="start">Phase 2B evidence graph summary</text>
+<text x="36" y="114" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#0f172a" text-anchor="start">access nodes</text>
+<rect x="260" y="90" width="610" height="34" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="1.5"/>
+<text x="882" y="113" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">753</text>
+<text x="36" y="178" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#0f172a" text-anchor="start">explicit dependency candidate</text>
+<rect x="260" y="154" width="4" height="34" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="276" y="177" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">6</text>
+<text x="36" y="242" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#0f172a" text-anchor="start">lifecycle candidate</text>
+<rect x="260" y="218" width="4" height="34" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="276" y="241" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">6</text>
+<text x="36" y="306" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#0f172a" text-anchor="start">object identity candidate</text>
+<rect x="260" y="282" width="520" height="34" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="792" y="305" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">642</text>
+<text x="36" y="370" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="400" fill="#0f172a" text-anchor="start">state write read candidate</text>
+<rect x="260" y="346" width="220" height="34" rx="6" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+<text x="492" y="369" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">272</text>
+<text x="36" y="475" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">Candidate edges are auditable seeds, not final dependency claims.</text>
+</svg>

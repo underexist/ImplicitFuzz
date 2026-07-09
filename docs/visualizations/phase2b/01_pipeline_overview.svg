@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="420" viewBox="0 0 1180 420">
+<rect width="1180" height="420" fill="#f8fafc"/>
+
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+  </marker>
+</defs>
+
+<text x="28" y="36" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a" text-anchor="start">Static extraction progress: from facts to candidate graph</text>
+<rect x="40" y="125" width="175" height="112" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="54" y="150" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">LLVM bitcode</text>
+<text x="54" y="173" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">linux-6.1 io_uring</text>
+<text x="54" y="191" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">LLVM 21.1.8 + SVF</text>
+<rect x="275" y="125" width="175" height="112" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="289" y="150" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">Phase 1 facts</text>
+<text x="289" y="173" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">call_fact / access_fact</text>
+<text x="289" y="191" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">DWARF + summary</text>
+<rect x="510" y="125" width="175" height="112" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="524" y="150" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">SQLite store</text>
+<text x="524" y="173" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">753 access facts</text>
+<text x="524" y="191" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">189 call facts</text>
+<rect x="745" y="125" width="175" height="112" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="759" y="150" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">Phase 2A graph</text>
+<text x="759" y="173" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">753 access nodes</text>
+<text x="759" y="191" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">state + lifecycle candidates</text>
+<rect x="980" y="125" width="175" height="112" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="994" y="150" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">Phase 2B candidates</text>
+<text x="994" y="173" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">identity candidates</text>
+<text x="994" y="191" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">explicit dependency seeds</text>
+<line x1="215" y1="181" x2="275" y2="181" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="450" y1="181" x2="510" y2="181" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="685" y1="181" x2="745" y2="181" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="920" y1="181" x2="980" y2="181" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<rect x="392" y="295" width="400" height="72" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="406" y="320" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">Current boundary</text>
+<text x="406" y="343" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">No final alias closure yet; no branch/gate facts yet; no LLM or syzkaller generation yet.</text>
+</svg>

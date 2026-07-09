@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="500" viewBox="0 0 1160 500">
+<rect width="1160" height="500" fill="#f8fafc"/>
+
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+  </marker>
+</defs>
+
+<text x="28" y="36" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a" text-anchor="start">Local graph: weak object identity candidates for io_kiocb</text>
+<rect x="520" y="215" width="300" height="112" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="534" y="240" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">object_identity_candidate</text>
+<text x="534" y="263" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">prefix = io_kiocb</text>
+<text x="534" y="281" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">scope = synthetic/minimal_stub</text>
+<text x="534" y="299" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">confidence = low</text>
+<text x="534" y="317" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">not final alias closure</text>
+<rect x="60" y="95" width="250" height="58" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="74" y="120" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">io_kiocb.flags</text>
+<text x="74" y="143" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_disarm_next</text>
+<line x1="310" y1="124" x2="520" y2="271" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="880" y="65" width="230" height="54" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="894" y="90" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">io_kiocb.link</text>
+<text x="894" y="113" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_disarm_next</text>
+<line x1="820" y1="271" x2="880" y2="92" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="880" y="141" width="230" height="54" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="894" y="166" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">io_kiocb.flags</text>
+<text x="894" y="189" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_disarm_next</text>
+<line x1="820" y1="271" x2="880" y2="168" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="880" y="217" width="230" height="54" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="894" y="242" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">io_kiocb.opcode</text>
+<text x="894" y="265" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_disarm_next</text>
+<line x1="820" y1="271" x2="880" y2="244" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<rect x="880" y="293" width="230" height="54" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="2"/>
+<text x="894" y="318" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">io_kiocb.ctx</text>
+<text x="894" y="341" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_disarm_next</text>
+<line x1="820" y1="271" x2="880" y2="320" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrow)"/>
+<text x="65" y="455" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">Use this slide to explain why Phase 2B is conservative: current base_object is still synthetic.</text>
+</svg>

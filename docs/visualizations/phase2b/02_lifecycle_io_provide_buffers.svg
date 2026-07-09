@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="430" viewBox="0 0 1120 430">
+<rect width="1120" height="430" fill="#f8fafc"/>
+
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+  </marker>
+</defs>
+
+<text x="28" y="36" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a" text-anchor="start">Local graph: io_provide_buffers lifecycle candidate</text>
+<rect x="60" y="135" width="260" height="118" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="74" y="160" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">access_fact #626</text>
+<text x="74" y="183" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">semantic_op = alloc</text>
+<text x="74" y="201" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">kind = call_alloc</text>
+<text x="74" y="219" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_provide_buffers</text>
+<text x="74" y="237" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">loc = slab.h:553</text>
+<rect x="430" y="135" width="260" height="118" rx="8" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+<text x="444" y="160" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">explicit_dependency_candidate</text>
+<text x="444" y="183" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">kind = alloc_before_free</text>
+<text x="444" y="201" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">confidence = high</text>
+<text x="444" y="219" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">status = requires identity refinement</text>
+<rect x="800" y="135" width="260" height="118" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+<text x="814" y="160" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">access_fact #692</text>
+<text x="814" y="183" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">semantic_op = free</text>
+<text x="814" y="201" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">kind = call_free</text>
+<text x="814" y="219" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_provide_buffers</text>
+<text x="814" y="237" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">loc = kbuf.c:449</text>
+<line x1="320" y1="194" x2="430" y2="194" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<line x1="690" y1="194" x2="800" y2="194" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="70" y="330" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">Use this slide to explain: Phase 2B can already expose alloc/free producer-consumer seeds.</text>
+</svg>

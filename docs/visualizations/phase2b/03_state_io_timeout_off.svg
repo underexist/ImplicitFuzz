@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="460" viewBox="0 0 1120 460">
+<rect width="1120" height="460" fill="#f8fafc"/>
+
+<defs>
+  <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+  </marker>
+</defs>
+
+<text x="28" y="36" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0f172a" text-anchor="start">Local graph: io_timeout.off state candidates</text>
+<rect x="60" y="170" width="275" height="118" rx="8" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+<text x="74" y="195" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">write fact #200</text>
+<text x="74" y="218" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">field = io_timeout.off</text>
+<text x="74" y="236" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">semantic_op = write</text>
+<text x="74" y="254" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = __io_timeout_prep</text>
+<text x="74" y="272" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">loc = timeout.c:480</text>
+<rect x="735" y="95" width="300" height="118" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="749" y="120" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">read fact #225</text>
+<text x="749" y="143" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">field = io_timeout.off</text>
+<text x="749" y="161" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">semantic_op = read</text>
+<text x="749" y="179" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_timeout</text>
+<text x="749" y="197" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">loc = timeout.c:532</text>
+<line x1="335" y1="229" x2="735" y2="154" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="465" y="145" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#d97706" text-anchor="start">state_write_read_candidate</text>
+<text x="465" y="165" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">confidence = high</text>
+<rect x="735" y="255" width="300" height="118" rx="8" fill="#dbeafe" stroke="#2563eb" stroke-width="2"/>
+<text x="749" y="280" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" fill="#0f172a" text-anchor="start">read fact #226</text>
+<text x="749" y="303" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">field = io_timeout.off</text>
+<text x="749" y="321" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">semantic_op = read</text>
+<text x="749" y="339" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">function = io_timeout</text>
+<text x="749" y="357" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">loc = timeout.c:41</text>
+<line x1="335" y1="229" x2="735" y2="314" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="465" y="305" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#d97706" text-anchor="start">state_write_read_candidate</text>
+<text x="465" y="325" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="400" fill="#64748b" text-anchor="start">confidence = high</text>
+<text x="65" y="385" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="400" fill="#64748b" text-anchor="start">This is a state-coupling seed, not an explicit dependency yet.</text>
+</svg>
