@@ -850,18 +850,29 @@ static BaseObjectInfo svfObjectToBaseObject(const BaseObjVar& obj, LLVMModuleSet
                                             const PrimitiveSummaryIndex& primitiveIndex,
                                             const WrapperSummaryIndex& wrapperIndex)
 {
-    if (const Value* llvmValue = llvmMS->getLLVMValue(&obj))
+    // LLVMModuleSet::getLLVMValue() is only assert-guarded (compiled out in
+    // this Release build) against a missing reverse mapping; hasLLVMValue()
+    // is the real, non-assert check and must be used first -- not every SVF
+    // object (e.g. synthetic/extapi-modeled objects) has a backing LLVM
+    // Value, and calling getLLVMValue() on one is undefined behavior
+    // (segfaulted on io_uring.c, which has SVF object kinds the smaller
+    // golden TUs never exercised).
+    if (llvmMS->hasLLVMValue(&obj))
     {
-        const BaseObjectInfo classified =
-            classifyRootValue(llvmValue, primitiveIndex, wrapperIndex);
-        if (classified.scope != "synthetic")
-            return classified;
+        if (const Value* llvmValue = llvmMS->getLLVMValue(&obj))
+        {
+            const BaseObjectInfo classified =
+                classifyRootValue(llvmValue, primitiveIndex, wrapperIndex);
+            if (classified.scope != "synthetic")
+                return classified;
+        }
     }
 
     if (obj.isGlobalObj())
         return {"global", obj.getValueName()};
-    return {"allocation_site",
-            "svf_obj" + std::to_string(obj.getId()) + "@" + obj.getICFGNode()->getSourceLoc()};
+    const ICFGNode* icfgNode = obj.getICFGNode();
+    const std::string locSuffix = icfgNode ? "@" + icfgNode->getSourceLoc() : "";
+    return {"allocation_site", "svf_obj" + std::to_string(obj.getId()) + locSuffix};
 }
 
 // Self-describing "scope:value" label for alias_fact.points_to_set entries
@@ -1703,6 +1714,71 @@ static void writeCallFact(std::ofstream& out, const RunMetadata& runMeta,
         << "\"}\n";
 }
 
+// Indirect calls (through a function pointer -- op-table dispatch, callbacks,
+// etc.) previously produced no call_fact at all, since the direct-call path
+// only fires when getCalledFunction() is non-null. This is a real gap for
+// kernel code: io_uring's core dispatch (io_issue_sqe -> io_op_defs[...].issue)
+// is exactly this pattern. Resolution is attempted via SVF's own indirect
+// call graph (Andersen points-to on the called operand, already computed for
+// the whole TU) rather than re-deriving it here, so "resolved" here means
+// exactly what SVF's own getNumOfResolvedIndCallEdge() counts.
+static bool writeIndirectCallFact(std::ofstream& out, const RunMetadata& runMeta,
+                                  const Function& func, const Instruction& inst,
+                                  uint64_t ordinal, const NodeBinding& binding,
+                                  CallGraph* callgraph, LLVMModuleSet* llvmMS)
+{
+    const std::string funcName = func.getName().str();
+    const std::string instId = instructionId(func, inst, ordinal);
+    const std::vector<std::string> provenance = {"svf"};
+
+    std::vector<std::string> candidates;
+    const ICFGNode* icfgNode =
+        llvmMS->hasICFGNode(&inst) ? llvmMS->getICFGNode(&inst) : nullptr;
+    const CallICFGNode* callNode =
+        icfgNode ? SVFUtil::dyn_cast<CallICFGNode>(icfgNode) : nullptr;
+    if (callNode && callgraph->hasIndCSCallees(callNode))
+    {
+        for (const FunObjVar* candidate : callgraph->getIndCSCallees(callNode))
+        {
+            // See svfObjectToBaseObject: getLLVMValue() is only
+            // assert-guarded, so hasLLVMValue() must be checked first.
+            if (llvmMS->hasLLVMValue(candidate))
+            {
+                if (const Value* llvmValue = llvmMS->getLLVMValue(candidate))
+                {
+                    if (const auto* fn = SVFUtil::dyn_cast<Function>(llvmValue))
+                        candidates.push_back(fn->getName().str());
+                }
+            }
+        }
+    }
+    std::sort(candidates.begin(), candidates.end());
+
+    // Schema requires a non-null "callee" string even when unresolved;
+    // callee_candidates (possibly empty) carries the full resolved set.
+    const std::string calleeField =
+        candidates.empty() ? "<indirect_unresolved>" : candidates.front();
+    const SchemaConfidence confidence =
+        candidates.empty() ? schemaConfidenceFromScore(0.5)
+                           : schemaConfidenceFromScore(0.75);
+
+    out << "{"
+        << "\"fact_type\":\"call_fact\","
+        << commonEnvelopeJson(runMeta, funcName, inst, "svf", provenance, confidence) << ","
+        << "\"instruction_id\":\"" << jsonEscape(instId) << "\","
+        << "\"svf_node_id\":\"" << jsonEscape(nodeIdString(binding.svfNodeId)) << "\","
+        << "\"icfg_node_id\":" << nullableNodeIdJson(binding.icfgNodeId) << ","
+        << "\"caller\":\"" << jsonEscape(funcName) << "\","
+        << "\"callee\":\"" << jsonEscape(calleeField) << "\","
+        << "\"call_site\":\"" << jsonEscape(instId) << "\","
+        << "\"is_indirect\":true,"
+        << "\"resolution_method\":\"pta\","
+        << "\"callee_candidates\":" << stringArrayJson(candidates) << ","
+        << "\"call_chain_hash\":\"" << jsonEscape(callChainHash(funcName, calleeField, instId))
+        << "\"}\n";
+    return !candidates.empty();
+}
+
 static void writeAccessFact(std::ofstream& out, const RunMetadata& runMeta,
                             const Function& func, const Instruction& inst,
                             uint64_t ordinal, const std::string& semanticOp,
@@ -1851,6 +1927,8 @@ int main(int argc, char** argv)
     uint64_t wrapperAllocFacts = 0;
     uint64_t wrapperFreeFacts = 0;
     uint64_t aliasFactCount = 0;
+    uint64_t indirectCallFacts = 0;
+    uint64_t indirectCallResolvedFacts = 0;
 
     WrapperSummaryIndex wrapperIndex;
     if (primitiveIndex.size() > 0)
@@ -1944,6 +2022,15 @@ int main(int argc, char** argv)
                                 ++wrapperFreeFacts;
                             }
                         }
+                        else if (!cb->isInlineAsm())
+                        {
+                            const bool resolved = writeIndirectCallFact(
+                                out, runMeta, func, inst, ordinal, binding, callgraph, llvmMS);
+                            ++factCount;
+                            ++indirectCallFacts;
+                            if (resolved)
+                                ++indirectCallResolvedFacts;
+                        }
                     }
 
                     if (const LoadInst* li = SVFUtil::dyn_cast<LoadInst>(&inst))
@@ -2005,6 +2092,8 @@ int main(int argc, char** argv)
     std::cout << "[implicitfuzz-extract] alias_fact (andersen points-to, "
                  "multi-object) hits: "
               << aliasFactCount << "\n";
+    std::cout << "[implicitfuzz-extract] indirect call_fact: " << indirectCallFacts
+              << " (resolved to >=1 candidate: " << indirectCallResolvedFacts << ")\n";
 
     delete vfg;
     AndersenWaveDiff::releaseAndersenWaveDiff();

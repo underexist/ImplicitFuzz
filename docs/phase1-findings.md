@@ -295,6 +295,18 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 
 ---
 
+### Indirect call resolution (call_fact gap fix)
+
+Prior to this fix, `call_fact` was only emitted for direct calls (`cb->getCalledFunction()` non-null). Indirect calls (function pointers, op-table/callback dispatch) produced **no fact at all** — a silent call-graph gap, confirmed on real kernel code: `io_uring/io_uring.c` alone has 33 genuine indirect call sites (verified independently via `llvm-dis` + grep for register-target `call` instructions) that were completely invisible to the extraction layer.
+
+Fixed by emitting `call_fact` for indirect calls too (`is_indirect: true`), resolving candidate callees from **SVF's own indirect call graph** (`CallGraph::hasIndCSCallees`/`getIndCSCallees`, built from Andersen points-to on the called operand for the whole `.bc` unit) rather than re-deriving resolution independently — so "resolved" here means exactly what SVF's own `getNumOfResolvedIndCallEdge()` counts, no new heuristic invented. `resolution_method: "pta"`; unresolved candidates get `callee: "<indirect_unresolved>"` and `confidence: low` (schema requires a non-null `callee` string even when nothing resolved); resolved candidates get `confidence: medium`.
+
+Measured on `io_uring.c`: 33 indirect call_fact, **0 resolved** — all 33 are in `__traceiter_*` tracepoint infrastructure functions, whose actual callback targets are registered at runtime by other subsystems (`register_trace_io_uring_create()` etc.), not statically determinable from this TU (or arguably from any static analysis). This is a correct, honest "unresolved," not a bug. Smoke-tested on 5 other large TUs (`net.c`, `rsrc.c`, `poll.c`, `rw.c`, `io-wq.c`): `io-wq.c` resolved 2/10 indirect calls with real candidates, e.g. a match-callback resolving to a single candidate (`io_wq_work_match_item`) and a for-each-worker callback correctly resolving to **two** candidates (`io_wq_worker_cancel`, `io_wq_worker_wake`) rather than guessing one — validates the mechanism works when SVF's per-TU points-to actually has the information.
+
+**Known limitation, not yet closed:** resolution is bounded by the same per-TU scope as everything else in this pipeline (see "Known Limitations" below) — a function pointer whose value flows in from another `.c` file cannot resolve here regardless of how the call graph shakes out at true whole-program scope. The op-table dispatch pattern (`io_op_defs[opcode].issue(req)`) that originally motivated this fix was **not** found as a literal indirect-call instruction in `io_uring.c`'s compiled `-O2` bitcode in this pass — worth a follow-up look at whether `-O2` lowers it to something else (e.g. a jump table with direct calls) rather than assuming it is simply missing.
+
+**Bug found and fixed while building this:** `LLVMModuleSet::getLLVMValue()` (used by Phase 2C tier-2's SVF-object reverse mapping, and now by indirect-call candidate name resolution) is guarded only by `assert()` in SVF's header — compiled out entirely in this project's `-DCMAKE_BUILD_TYPE=Release` build. Calling it on an SVF object with no backing LLVM value (common for `-O2` real kernel code with many extapi-modeled/synthetic object kinds that never appear in the small golden TUs) is undefined behavior; **segfaulted on `io_uring.c`** the first time tier-2 ran against real, large-scale code (Phase 2C's regression set — tiny + 3 kernel goldens — was too small to trigger it). Fixed by checking the paired `hasLLVMValue()` before every `getLLVMValue()` call. Worth remembering for any future SVF API use in this codebase: several SVF accessors follow this same assert-only-guard pattern (`getObjectNode()` is another one, deliberately avoided in Phase 2C tier-1 for this reason) — always look for and use the paired `has*()` check rather than trusting the assert.
+
 ## Known Limitations (Phase 1 scope)
 
 - No BTF integration in extractor output yet (layout cross-check only via `check_btf_layout.py`).
@@ -304,6 +316,8 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 - `whole_object` fallback still dominates in tiny case (expected for alloc/free and non-GEP accesses).
 - Wrapper propagation limited to direct SSA + one alloca hop; no cross-TU bodies in per-file kernel bitcode.
 - Kernel wrapper propagation deferred (Phase 1.5 audit found no in-TU candidates in timeout/cancel smoke).
+- **Every SVF analysis (Andersen points-to, indirect call resolution, alias_fact) is scoped to a single `.bc` compilation unit.** Cross-TU calls, cross-TU points-to, and cross-TU indirect-call resolution do not exist yet; the 26-file io_uring experiment is a union of independent per-TU analyses, not a whole-program one.
+- Indirect call resolution (new) inherits this same per-TU boundary; runtime-registered callbacks (tracepoints, module-registered handlers) are not resolvable by any static per-TU analysis regardless.
 
 ---
 
@@ -325,11 +339,13 @@ Alternates scanned: `poll.c` (alloc=2, free=3), `rsrc.c` (alloc=9, free=21) — 
 13. **[done] Phase 2B identity/dependency candidates** — weak object identity and lifecycle explicit-dependency candidates over the evidence graph
 14. **[done] Phase 2C tier-1 object identity refinement** — real `base_object` (global/formal_param/allocation_site) via direct GEP/local-slot resolution, replacing the synthetic stub.
 15. **[done] Phase 2C tier-2 object identity refinement** — SVF Andersen points-to refines `formal_param`/`synthetic` toward concrete allocation_site/global (per v3 §5.6, those two scopes are relational evidence only); emits `alias_fact` for genuinely ambiguous multi-object cases; new `derive_pointsto_identity_edges` links facts across function boundaries on points-to intersection. `object_identity_candidate`: 642→517 (`same_function_symbolic_object_prefix`) + 6 new (`pointsto_intersection_andersen`); confidence 489 low / 34 medium (corrected — `formal_param` alone does not grant medium). See `docs/phase2c-object-identity-refinement.md`.
-16. [next] branch_fact / gate_seed_fact for target state gates
-17. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
-18. [later] BTF in provenance / main recovery chain
-19. [later] container_of / list_entry
-20. [later] unify wrapper-call-site vs. Andersen points-to granularity (see phase2c doc's "Known, accepted limitation")
+16. **[done] indirect call_fact** — call_fact now emitted for indirect calls (`is_indirect=true`, `resolution_method=pta`) via SVF's own indirect call graph; fixed a real call-graph blind spot (33 indirect sites on `io_uring.c` previously produced zero facts). Also fixed a `getLLVMValue()` assert-only-guard segfault this surfaced on real large-TU code (see "Indirect call resolution" section above).
+17. [next] branch_fact / gate_seed_fact for target state gates
+18. [later] kernel wrapper propagation — only if audit finds direct primitive patterns in TU bitcode
+19. [later] BTF in provenance / main recovery chain
+20. [later] container_of / list_entry
+21. [later] unify wrapper-call-site vs. Andersen points-to granularity (see phase2c doc's "Known, accepted limitation")
+22. [later] investigate why op-table dispatch (`io_op_defs[opcode].issue`) doesn't appear as a literal indirect call in `io_uring.c`'s `-O2` IR
 ```
 
 **Phase 1 complete.** Do not expand C++ extractor scope until ingestion validates fact consumption.
