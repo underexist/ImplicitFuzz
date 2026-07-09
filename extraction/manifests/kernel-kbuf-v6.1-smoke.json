@@ -1,0 +1,24 @@
+{
+  "manifest_id": "kernel-kbuf-v6.1-smoke",
+  "description": "Smoke regression for io_uring/kbuf.c direct primitive alloc/free summary hits.",
+  "kernel_version": "6.1",
+  "kernel_tree": "/home/xujunru/linux-6.1",
+  "tu": "io_uring/kbuf.c",
+  "bc": "/tmp/io_uring_kbuf.bc",
+  "facts_out": "/tmp/io_uring_kbuf.facts.jsonl",
+  "golden_case": "kernel_kbuf_primitive_case3",
+  "golden_dir": "extraction/golden/kernel_kbuf_primitive_case3",
+  "ground_truth": "extraction/golden/kernel_kbuf_primitive_case3/ground_truth.json",
+  "run_script": "extraction/scripts/run_kernel_case3.sh",
+  "schema_dir": "extraction/schema/facts",
+  "acceptance": {
+    "schema_validation": true,
+    "primitive_alloc_function": "io_provide_buffers",
+    "primitive_free_source_location": "io_uring/kbuf.c:449",
+    "min_primitive_alloc_hits": 3,
+    "min_primitive_free_hits": 4
+  },
+  "bitcode_generation_doc": "extraction/golden/kernel_kbuf_primitive_case3/README.md",
+  "phase1_findings": "docs/phase1-findings.md",
+  "notes": "Phase 1.6: first kernel TU with direct kzalloc/kfree primitive summary hits."
+}

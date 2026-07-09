@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/primitive_summary.schema.json",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "name_pattern": { "type": "string" },
+      "semantic_op": {
+        "type": "string",
+        "enum": [
+          "alloc",
+          "free",
+          "free_async",
+          "retain",
+          "release",
+          "read",
+          "write",
+          "escape",
+          "none"
+        ]
+      },
+      "param_roles": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "index": { "type": "integer", "minimum": 0 },
+            "role": { "type": "string" }
+          },
+          "required": ["index", "role"]
+        }
+      },
+      "return_role": { "type": "string" },
+      "lifecycle": {
+        "type": "string",
+        "enum": ["allocate", "free", "free_async", "retain", "release", "none"]
+      },
+      "is_async": { "type": "boolean" },
+      "transfers_ownership": { "type": "boolean" },
+      "retains_reference": { "type": "boolean" },
+      "effects": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "enum": [
+            "lock_acquire",
+            "lock_release",
+            "container_link",
+            "container_unlink",
+            "async_enqueue",
+            "callback_register",
+            "callback_invoke",
+            "copy_from_user",
+            "copy_to_user"
+          ]
+        }
+      },
+      "effect_bindings": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "effect": { "type": "string" },
+            "target_param": { "type": "integer" },
+            "context_param": { "type": "integer" },
+            "callback_param": { "type": "integer" }
+          },
+          "required": ["effect"]
+        }
+      },
+      "confidence": { "type": "string", "enum": ["high", "medium", "low"] },
+      "status": {
+        "type": "string",
+        "enum": ["draft", "validated"],
+        "description": "draft = 未对照真实内核源码校验"
+      }
+    },
+    "required": ["name_pattern", "lifecycle", "semantic_op", "confidence"]
+  }
+}

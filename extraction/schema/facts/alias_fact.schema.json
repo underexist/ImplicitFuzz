@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/alias_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "object_id": {
+      "type": "object",
+      "properties": {
+        "object_scope": { "type": "string", "enum": ["allocation_site", "global", "formal_param", "synthetic"] },
+        "value": { "type": "string" }
+      },
+      "required": ["object_scope", "value"]
+    },
+    "points_to_set": { "type": "array", "items": { "type": "string" } },
+    "relation_evidence": { "type": "string", "description": "产生该关系的指令 instruction_id 或值流边标识" },
+    "pta_kind": { "type": "string", "enum": ["andersen", "flow_sensitive"] }
+  },
+  "required": ["object_id", "points_to_set", "relation_evidence", "pta_kind"]
+}

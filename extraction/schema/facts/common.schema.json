@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/common.schema.json",
+  "title": "CommonFactEnvelope",
+  "type": "object",
+  "properties": {
+    "fact_type": {
+      "type": "string",
+      "enum": ["entry_fact", "call_fact", "access_fact", "alias_fact", "branch_fact", "gate_seed_fact"]
+    },
+    "schema_version": { "type": "string", "const": "1.0.0" },
+    "kernel_version": { "type": "string" },
+    "llvm_version": { "type": "string", "description": "精确到 patch，如 21.1.0" },
+    "opt_level": { "type": "string", "enum": ["-O0", "-Og", "-O2 -g"] },
+    "bc_unit": { "type": "string" },
+    "function": { "type": "string" },
+    "source_location": {
+      "type": ["object", "null"],
+      "properties": {
+        "spelling": { "type": "string", "description": "file:line，宏调用书写位置" },
+        "expansion": { "type": "string", "description": "file:line，宏展开后位置，cross_opt_key 用这个分量" },
+        "inlined_at": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["spelling", "expansion", "inlined_at"]
+    },
+    "primary_provenance": {
+      "type": "string",
+      "enum": ["svf", "dwarf", "dwarf_partial", "btf", "btf_partial", "typecopilot", "container_of_heuristic", "numeric_fallback", "summary"]
+    },
+    "provenance": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["svf", "dwarf", "dwarf_partial", "btf", "btf_partial", "typecopilot", "container_of_heuristic", "numeric_fallback", "summary"] },
+      "minItems": 1
+    },
+    "confidence": { "type": "string", "enum": ["high", "medium_high", "medium", "medium_low", "low"] },
+    "confidence_score": { "type": "number", "minimum": 0, "maximum": 1, "description": "可选数值置信度，与 confidence 枚举并存" }
+  },
+  "required": ["fact_type", "schema_version", "kernel_version", "llvm_version", "opt_level", "bc_unit", "function", "primary_provenance", "provenance", "confidence"]
+}

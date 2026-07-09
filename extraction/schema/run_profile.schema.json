@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/run_profile.schema.json",
+  "type": "object",
+  "properties": {
+    "run_profile": { "type": "string", "enum": ["tu", "subsystem", "closure"] },
+    "bc_inputs": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+  },
+  "required": ["run_profile", "bc_inputs"]
+}

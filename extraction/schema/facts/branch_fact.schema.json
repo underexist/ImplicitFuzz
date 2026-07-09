@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/branch_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "branch_instruction_id": { "type": "string" },
+    "condition_value": { "type": "string" },
+    "control_deps": { "type": "array", "items": { "type": "string" } },
+    "related_loads": { "type": "array", "items": { "type": "string" } },
+    "slice_range": { "type": "string" }
+  },
+  "required": ["branch_instruction_id", "condition_value", "control_deps", "related_loads", "slice_range"]
+}

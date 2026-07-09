@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/call_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "caller": { "type": "string" },
+    "callee": { "type": "string" },
+    "call_site": { "type": "string", "description": "instruction_id" },
+    "is_indirect": { "type": "boolean" },
+    "resolution_method": { "type": "string", "enum": ["direct", "mlta", "pta"] },
+    "callee_candidates": { "type": "array", "items": { "type": "string" } },
+    "context_depth": { "type": ["integer", "null"], "description": "阶段一预留字段，不填" },
+    "call_chain_hash": { "type": "string", "description": "第一版唯一必填的弱上下文标识" },
+    "entry_context": { "type": ["string", "null"], "description": "阶段一预留字段，不填" },
+    "instruction_id": { "type": "string" },
+    "svf_node_id": { "type": "string" }
+  },
+  "required": ["caller", "callee", "call_site", "is_indirect", "resolution_method", "call_chain_hash", "instruction_id", "svf_node_id"]
+}

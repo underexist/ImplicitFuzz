@@ -1,0 +1,24 @@
+{
+  "manifest_id": "kernel-cancel-v6.1-smoke",
+  "description": "Smoke regression for io_uring/cancel.c struct-typed GEP and kernel_cancel_case2 symbolic recovery.",
+  "kernel_version": "6.1",
+  "kernel_tree": "/home/xujunru/linux-6.1",
+  "tu": "io_uring/cancel.c",
+  "bc": "/tmp/io_uring_cancel.bc",
+  "facts_out": "/tmp/io_uring_cancel.facts.jsonl",
+  "golden_case": "kernel_cancel_case2",
+  "golden_dir": "extraction/golden/kernel_cancel_case2",
+  "ground_truth": "extraction/golden/kernel_cancel_case2/ground_truth.json",
+  "run_script": "extraction/scripts/run_kernel_case2.sh",
+  "schema_dir": "extraction/schema/facts",
+  "acceptance": {
+    "schema_validation": true,
+    "case2_symbolic": "io_hash_bucket.list",
+    "case2_field_type": "struct hlist_head",
+    "case2_source_location": "io_uring/cancel.c:207",
+    "case2_recovery_path": "struct_typed_gep"
+  },
+  "bitcode_generation_doc": "extraction/golden/kernel_cancel_case2/README.md",
+  "phase1_findings": "docs/phase1-findings.md",
+  "notes": "timeout.c has no struct-typed GEP at -O2; case2 uses cancel.c init_hash_table."
+}

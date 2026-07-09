@@ -1,0 +1,22 @@
+{
+  "manifest_version": "1.0.0",
+  "created_at": "2026-07-08T00:00:00Z",
+  "host": "linux-x86_64",
+  "kernel_version": "v6.6",
+  "kernel_config_path": "PENDING_TRACK_B",
+  "kernel_config_hash": "PENDING_TRACK_B",
+  "subsystem_scope": "io_uring (single TU, phase-1 smoke)",
+  "bc_files": ["PENDING_TRACK_B"],
+  "ll_files": [],
+  "compile_commands_json": "PENDING_TRACK_B",
+  "bc_list": "PENDING_TRACK_B",
+  "debug_info_kind": "dwarf",
+  "btf_available": false,
+  "pahole_version": null,
+  "vmlinux_btf_path": null,
+  "clang_version": "PENDING_TRACK_B",
+  "llvm_version": "21.1.0",
+  "svf_commit": "0000000000000000000000000000000000000000",
+  "opt_level": "-O2 -g",
+  "id_generation_rule_version": "1.0.0"
+}

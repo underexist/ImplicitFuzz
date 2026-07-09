@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/gate_seed_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "target_symbol": { "type": "string" },
+    "gate_kind": { "type": "string" },
+    "predicate_summary": { "type": "string" },
+    "related_objects": { "type": "array", "items": { "type": "string" } },
+    "related_access_facts": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["target_symbol", "gate_kind", "predicate_summary", "related_objects", "related_access_facts"]
+}

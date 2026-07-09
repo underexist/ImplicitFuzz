@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/entry_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "entry_kind": {
+      "type": "string",
+      "enum": ["syscall", "file_op", "callback", "workqueue", "ioctl", "uring_cmd", "task_work", "io_worker", "sqpoll_thread", "completion_path", "timeout_callback", "cancel_path"]
+    },
+    "entry_symbol": { "type": "string" },
+    "associated_syscall": { "type": ["string", "null"] }
+  },
+  "required": ["entry_kind", "entry_symbol"]
+}

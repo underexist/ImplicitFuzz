@@ -1,0 +1,28 @@
+{
+  "case_id": "kernel_timeout_case1_gep",
+  "kernel_version": "6.1.0",
+  "tu": "io_uring/timeout.c",
+  "bc": "/tmp/io_uring_timeout.bc",
+  "facts": "/tmp/io_uring_timeout.facts.jsonl",
+  "target_source_location": "io_uring/timeout.c:480",
+  "target_expression": "timeout->off = off",
+  "expected_base": "timeout",
+  "expected_field_name": "off",
+  "expected_field_type": "u32",
+  "expected_access_path_symbolic": "io_timeout.off",
+  "expected_byte_offset": 8,
+  "expected_semantic_op": "write",
+  "expected_access_kind": "direct_store",
+  "expected_numeric_kind": "gep_offsets",
+  "stage1_acceptance": {
+    "require_access_fact_hit_on_line": true,
+    "numeric_kind_prefer": "gep_offsets",
+    "symbolic_not_required": false
+  },
+  "stage2_quality_goal": {
+    "expect_access_path_symbolic": "io_timeout.off",
+    "expect_field_type_recovery": true
+  },
+  "annotation_source": "manual",
+  "notes": "Chosen as a simple single-level struct write in __io_timeout_prep; stable source location hit in first pass."
+}

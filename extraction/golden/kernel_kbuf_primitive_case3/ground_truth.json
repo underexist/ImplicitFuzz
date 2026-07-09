@@ -1,0 +1,24 @@
+{
+  "case_id": "kernel_kbuf_primitive_case3",
+  "kernel_version": "6.1.0",
+  "tu": "io_uring/kbuf.c",
+  "bc": "/tmp/io_uring_kbuf.bc",
+  "facts": "/tmp/io_uring_kbuf.facts.jsonl",
+  "target_source_location_free": "io_uring/kbuf.c:449",
+  "target_expression_free": "kfree(bl)",
+  "target_function_alloc": "io_provide_buffers",
+  "target_expression_alloc": "bl = kzalloc(sizeof(*bl), GFP_KERNEL_ACCOUNT)",
+  "expected_semantic_op_alloc": "alloc",
+  "expected_access_kind_alloc": "call_alloc",
+  "expected_semantic_op_free": "free",
+  "expected_access_kind_free": "call_free",
+  "expected_primary_provenance": "summary",
+  "stage1_acceptance": {
+    "require_primitive_alloc_in_function": true,
+    "require_primitive_free_on_line": true,
+    "min_tu_primitive_alloc_hits": 3,
+    "min_tu_primitive_free_hits": 4
+  },
+  "annotation_source": "manual",
+  "notes": "kbuf.c is the smallest io_uring TU with direct kzalloc/kfree IR. Alloc call sites expand to include/linux/slab.h:553 via kzalloc macro; free sites retain kbuf.c line numbers."
+}

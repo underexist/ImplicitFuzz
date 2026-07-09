@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/access_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "semantic_op": {
+      "type": "string",
+      "enum": ["alloc", "read", "write", "free", "free_async", "retain", "release", "escape"],
+      "description": "free_async 专指 kfree_rcu/call_rcu 等延迟释放，不与 free 等价"
+    },
+    "access_kind": {
+      "type": "string",
+      "enum": ["direct_load", "direct_store", "memcpy", "memset", "atomic", "usercopy", "call_arg", "call_alloc", "call_free"],
+      "description": "地址逃逸只记 semantic_op=escape，这里不设 address_escape；call_alloc/call_free 用于最小 driver 的分配/释放调用点"
+    },
+    "base_object": {
+      "type": "object",
+      "description": "object_id 标签联合类型，见 v3 §5.6",
+      "properties": {
+        "object_scope": { "type": "string", "enum": ["allocation_site", "global", "formal_param", "synthetic"] },
+        "value": { "type": "string", "description": "allocation_site_id(instruction_id) | global_symbol(name) | \"function:arg_index\" | synthetic_stub_object(summary_name)，按 object_scope 解释" }
+      },
+      "required": ["object_scope", "value"]
+    },
+    "object_scope": { "type": "string", "enum": ["allocation_site", "global", "formal_param", "synthetic"] },
+    "access_path_symbolic": { "type": ["string", "null"] },
+    "numeric_kind": { "type": "string", "enum": ["gep_offsets", "byte_range", "whole_object", "unknown"] },
+    "access_path_numeric": { "type": ["string", "null"], "description": "按 numeric_kind 解释；unknown 时可为空" },
+    "field_type": { "type": ["string", "null"] },
+    "access_path_recovery": { "type": "string", "enum": ["dwarf", "dwarf_partial", "btf", "btf_partial", "container_of_heuristic", "numeric_only"] },
+    "instruction_id": { "type": "string", "description": "module_hash:function:bb_ordinal:inst_ordinal:ir_hash，build-local stable" },
+    "svf_node_id": { "type": "string" },
+    "cross_opt_key": {
+      "type": "string",
+      "description": "source_location.expansion + access_path_key + function + semantic_op；access_path_key 三级降级 symbolic_path||numeric_repr||source_snippet_hash（v3.1 P7.1）"
+    }
+  },
+  "required": ["semantic_op", "access_kind", "base_object", "object_scope", "numeric_kind", "access_path_recovery", "instruction_id", "svf_node_id", "cross_opt_key"]
+}

@@ -1,0 +1,23 @@
+{
+  "case_id": "kernel_cancel_case2_struct_gep",
+  "kernel_version": "6.1.0",
+  "tu": "io_uring/cancel.c",
+  "bc": "/tmp/io_uring_cancel.bc",
+  "facts": "/tmp/io_uring_cancel.facts.jsonl",
+  "target_source_location": "io_uring/cancel.c:207",
+  "target_expression": "INIT_HLIST_HEAD(&table->hbs[i].list)",
+  "expected_base": "table",
+  "expected_field_name": "list",
+  "expected_struct_type": "io_hash_bucket",
+  "expected_access_path_symbolic": "io_hash_bucket.list",
+  "expected_byte_offset": 8,
+  "expected_field_type": "struct hlist_head",
+  "expected_semantic_op": "write",
+  "expected_access_kind": "direct_store",
+  "expected_numeric_kind": "gep_offsets",
+  "expected_numeric": [1],
+  "expected_gep_source_element_type_prefix": "%struct.io_hash_bucket",
+  "recovery_path": "struct_typed_gep",
+  "annotation_source": "manual",
+  "notes": "timeout.c at -O2 has no struct-typed GEP candidates (all i8 byte-offset). cancel.c init_hash_table line 207 provides a stable struct GEP with variable array index + constant field index 1."
+}

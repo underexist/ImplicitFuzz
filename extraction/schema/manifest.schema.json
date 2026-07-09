@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/manifest.schema.json",
+  "title": "BuildManifest",
+  "type": "object",
+  "properties": {
+    "manifest_version": { "type": "string", "const": "1.0.0" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "host": { "type": "string", "enum": ["linux-x86_64", "linux-aarch64"], "description": "阶段一只允许 linux；Mac 不产出 manifest 实例" },
+    "kernel_version": { "type": "string" },
+    "kernel_config_path": { "type": "string" },
+    "kernel_config_hash": { "type": "string" },
+    "subsystem_scope": { "type": "string" },
+    "bc_files": { "type": "array", "items": { "type": "string" } },
+    "ll_files": { "type": "array", "items": { "type": "string" } },
+    "compile_commands_json": { "type": "string" },
+    "bc_list": { "type": "string" },
+    "debug_info_kind": { "type": "string", "enum": ["dwarf", "dwarf_partial", "none"] },
+    "btf_available": { "type": "boolean" },
+    "pahole_version": { "type": ["string", "null"] },
+    "vmlinux_btf_path": { "type": ["string", "null"] },
+    "clang_version": { "type": "string", "description": "精确到 patch" },
+    "llvm_version": { "type": "string", "const": "21.1.0" },
+    "svf_commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "opt_level": { "type": "string", "enum": ["-O0", "-Og", "-O2 -g"] },
+    "id_generation_rule_version": { "type": "string", "description": "instruction_id/object_id 生成规则版本号，规则变更必须递增" }
+  },
+  "required": [
+    "manifest_version", "created_at", "host", "kernel_version", "subsystem_scope",
+    "bc_files", "debug_info_kind", "btf_available", "clang_version", "llvm_version",
+    "svf_commit", "opt_level", "id_generation_rule_version"
+  ]
+}

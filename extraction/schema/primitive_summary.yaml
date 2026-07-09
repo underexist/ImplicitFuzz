@@ -1,0 +1,241 @@
+# extraction/schema/primitive_summary.yaml
+# Kernel B6 v0: alloc / free / free_async direct primitive recognition.
+# Matching: exact name, or prefix wildcard (pattern ends with *).
+
+# --- userland tiny golden ---
+- name_pattern: "malloc"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: validated
+
+- name_pattern: "calloc"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: count}
+    - {index: 1, role: size}
+  confidence: high
+  status: validated
+
+- name_pattern: "free"
+  lifecycle: free
+  semantic_op: free
+  param_roles:
+    - {index: 0, role: freed_object}
+  confidence: high
+  status: validated
+
+# --- kernel alloc/free v0 ---
+- name_pattern: "kmalloc"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "kmalloc*"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "kzalloc"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "kzalloc*"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "vmalloc"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "kmem_cache_alloc*"
+  lifecycle: allocate
+  return_role: allocated_object
+  semantic_op: alloc
+  param_roles:
+    - {index: 0, role: cache_handle}
+  confidence: high
+  status: draft
+
+- name_pattern: "kfree"
+  lifecycle: free
+  semantic_op: free
+  param_roles:
+    - {index: 0, role: freed_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "kmem_cache_free"
+  lifecycle: free
+  semantic_op: free
+  param_roles:
+    - {index: 0, role: cache_handle}
+    - {index: 1, role: freed_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "kfree_rcu*"
+  lifecycle: free_async
+  is_async: true
+  semantic_op: free_async
+  param_roles:
+    - {index: 0, role: freed_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "call_rcu"
+  lifecycle: free_async
+  is_async: true
+  semantic_op: free_async
+  param_roles:
+    - {index: 0, role: rcu_head}
+    - {index: 1, role: callback}
+  confidence: high
+  status: draft
+
+# --- kernel B6.1 v0.1: usercopy / refcount / percpu_ref (effects-first) ---
+- name_pattern: "copy_from_user"
+  lifecycle: none
+  semantic_op: read
+  effects: [copy_from_user]
+  param_roles:
+    - {index: 0, role: kernel_dst}
+    - {index: 1, role: user_src}
+    - {index: 2, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "_copy_from_user"
+  lifecycle: none
+  semantic_op: read
+  effects: [copy_from_user]
+  param_roles:
+    - {index: 0, role: kernel_dst}
+    - {index: 1, role: user_src}
+    - {index: 2, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "copy_to_user"
+  lifecycle: none
+  semantic_op: write
+  effects: [copy_to_user]
+  param_roles:
+    - {index: 0, role: user_dst}
+    - {index: 1, role: kernel_src}
+    - {index: 2, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "_copy_to_user"
+  lifecycle: none
+  semantic_op: write
+  effects: [copy_to_user]
+  param_roles:
+    - {index: 0, role: user_dst}
+    - {index: 1, role: kernel_src}
+    - {index: 2, role: size}
+  confidence: high
+  status: draft
+
+- name_pattern: "refcount_inc"
+  lifecycle: none
+  semantic_op: retain
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "refcount_inc*"
+  lifecycle: none
+  semantic_op: retain
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "refcount_dec_and_test"
+  lifecycle: none
+  semantic_op: release
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "refcount_dec*"
+  lifecycle: none
+  semantic_op: release
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "refcount_read"
+  lifecycle: none
+  semantic_op: read
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "percpu_ref_get"
+  lifecycle: none
+  semantic_op: retain
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "percpu_ref_put"
+  lifecycle: none
+  semantic_op: release
+  param_roles:
+    - {index: 0, role: target_object}
+  confidence: high
+  status: draft
+
+- name_pattern: "percpu_ref_get_many"
+  lifecycle: none
+  semantic_op: retain
+  param_roles:
+    - {index: 0, role: target_object}
+    - {index: 1, role: count}
+  confidence: high
+  status: draft
+
+- name_pattern: "percpu_ref_put_many"
+  lifecycle: none
+  semantic_op: release
+  param_roles:
+    - {index: 0, role: target_object}
+    - {index: 1, role: count}
+  confidence: high
+  status: draft
