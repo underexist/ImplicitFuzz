@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ImplicitFuzz 静态抽取层阶段汇报</title>
+  <style>
+    :root {
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #dbe3ef;
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --blue: #2563eb;
+      --cyan: #0891b2;
+      --amber: #d97706;
+      --green: #16a34a;
+      --red: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      line-height: 1.75;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 42px 28px 80px;
+    }
+
+    header {
+      margin-bottom: 34px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 34px;
+      line-height: 1.22;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 42px 0 14px;
+      padding-top: 4px;
+      font-size: 25px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 28px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 22px 24px;
+      margin: 18px 0;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .note {
+      border-left: 4px solid var(--blue);
+      background: #eff6ff;
+      padding: 14px 18px;
+      margin: 18px 0;
+      border-radius: 8px;
+    }
+
+    .warning {
+      border-left: 4px solid var(--amber);
+      background: #fffbeb;
+      padding: 14px 18px;
+      margin: 18px 0;
+      border-radius: 8px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin: 18px 0;
+    }
+
+    .metric {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 16px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1.2;
+      color: var(--blue);
+      margin-bottom: 4px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 14px 0 22px;
+    }
+
+    th, td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      padding: 2px 5px;
+      background: #e2e8f0;
+      border-radius: 5px;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.92em;
+    }
+
+    pre {
+      overflow: auto;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    figure {
+      margin: 24px 0 34px;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    figcaption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .talk {
+      margin-top: 12px;
+      color: #334155;
+      font-size: 15px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #e0f2fe;
+      color: #075985;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    ol, ul {
+      padding-left: 24px;
+    }
+
+    @media (max-width: 800px) {
+      main {
+        padding: 28px 16px 60px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>ImplicitFuzz 静态抽取层阶段汇报</h1>
+    <p class="subtitle">主题：为什么选择 LLVM IR + SVF，以及当前从静态事实抽取到候选证据图的实现进展</p>
+    <p class="subtitle">汇报定位：不是最终系统演示，而是说明关键地基已经打通，后续可以进入对象身份 refinement、门控分支抽取和执行验证。</p>
+  </header>
+
+  <section>
+    <h2>1. 研究背景：为什么需要静态抽取层</h2>
+    <p>
+      课题关注的是内核模糊测试中的隐式依赖。显式依赖通常表现为文件描述符、句柄、返回值等接口层资源流；
+      隐式依赖则隐藏在内核对象内部状态中，例如前序调用写入某个对象字段，后续调用虽然参数上没有直接消费前序返回值，
+      但能否走到深层分支却取决于这些内部字段是否被正确设置。
+    </p>
+    <p>
+      这类依赖很难只靠 syzkaller 的语法描述或覆盖率反馈解决。比较操作数提示能帮助修参数，但它无法回答：
+      “应该插入哪个前序调用来改变某个内核对象字段”，也无法表达“前序调用的参数和后续调用参数之间应满足怎样的跨调用对齐关系”。
+    </p>
+    <div class="note">
+      本阶段要解决的不是最终生成种子，而是先建立一个可追溯的事实账：哪些函数在什么位置读写了哪些对象字段，哪些调用具有分配/释放语义，
+      这些事实的来源和置信度是什么。
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 调研结论：为什么选择 LLVM IR + SVF</h2>
+
+    <h3>2.1 只做源码文本或 AST 不够</h3>
+    <p>
+      Linux 内核大量依赖宏、内联函数、条件编译、结构体嵌套和函数指针。源码文本扫描可以定位模式，但很难稳定回答跨函数值流和别名问题。
+      Clang AST 能看见类型和语法结构，但一旦进入跨函数传递、函数指针调用、宏展开后的指针运算，仍需要更底层的数据流表示。
+    </p>
+
+    <h3>2.2 直接用二进制也不合适</h3>
+    <p>
+      二进制分析能贴近最终执行形态，但字段名、结构体类型、宏调用位置等语义信息会大幅丢失。我们的目标不是单纯恢复控制流，
+      而是要得到“对象字段级”的可解释证据，因此需要保留尽可能多的类型和源码位置信息。
+    </p>
+
+    <h3>2.3 LLVM IR 是比较合适的中间层</h3>
+    <p>
+      LLVM IR 既保留了源码编译后的真实控制流、调用、load/store/GEP 等低层操作，又能通过 debug info 关联回源码位置和 DWARF 类型信息。
+      对内核而言，使用 <code>LLVM=1</code> 和真实 <code>.cmd</code> 编译命令生成 bitcode，可以避免手写复杂内核编译参数。
+    </p>
+
+    <h3>2.4 SVF 提供值流和指针分析底座</h3>
+    <p>
+      选择 SVF 的核心原因是它已经提供 LLVM IR 上成熟的 SVFIR、Andersen 指针分析、调用图、ICFG/SVFG 等基础设施。
+      我们不需要从头实现跨函数值流和 points-to 分析，而是在 SVF 的事实基础上实现自己的 access-path 符号化、primitive summary 和证据落库。
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>方案</th>
+          <th>优点</th>
+          <th>为什么不是主线</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>源码文本/规则扫描</td>
+          <td>实现快，适合找 API 模式</td>
+          <td>跨函数值流、别名和宏展开后指针运算很弱</td>
+        </tr>
+        <tr>
+          <td>Clang AST</td>
+          <td>类型和语法结构清楚</td>
+          <td>难以覆盖优化后 IR 形态、跨函数 points-to 和 SVFG</td>
+        </tr>
+        <tr>
+          <td>KLEE/SyzSpec 类符号执行</td>
+          <td>能恢复结构和约束</td>
+          <td>成本重，适合作为后续约束恢复，不适合作为第一层事实抽取底座</td>
+        </tr>
+        <tr>
+          <td>二进制分析</td>
+          <td>贴近最终执行</td>
+          <td>字段名、源码位置、结构体语义损失大</td>
+        </tr>
+        <tr>
+          <td><strong>LLVM IR + SVF</strong></td>
+          <td>兼顾真实 IR、debug info、值流/指针分析</td>
+          <td>当前主线，工程上已经跑通</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>3. 当前总体路线</h2>
+    <p>
+      当前实现已经从“能抽取事实”推进到“能把事实组织成候选证据图”。下面这张图可以作为组会里的主线图：
+      我们先从内核 bitcode 抽取结构化 facts，再导入 SQLite，随后派生出候选图边。
+    </p>
+
+    <figure>
+      <img src="01_pipeline_overview.svg" alt="Static extraction pipeline overview">
+      <figcaption>图 1：从 LLVM bitcode 到 Phase 2B 候选证据图的阶段路线。</figcaption>
+      <p class="talk">
+        讲解建议：强调当前边界。我们已经完成事实抽取和候选证据图，但还没有做最终 alias closure、branch/gate fact、LLM 推断和 syzkaller 生成。
+      </p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>4. 当前实现进度总览</h2>
+    <div class="grid">
+      <div class="metric"><strong>753</strong><span>access nodes</span></div>
+      <div class="metric"><strong>272</strong><span>state_write_read_candidate</span></div>
+      <div class="metric"><strong>642</strong><span>object_identity_candidate</span></div>
+      <div class="metric"><strong>6</strong><span>lifecycle_candidate</span></div>
+      <div class="metric"><strong>6</strong><span>explicit_dependency_candidate</span></div>
+      <div class="metric"><strong>15</strong><span>Python tests passed</span></div>
+    </div>
+
+    <figure>
+      <img src="00_phase2b_counts.svg" alt="Phase 2B evidence graph counts">
+      <figcaption>图 2：Phase 2B 当前节点和候选边规模。</figcaption>
+      <p class="talk">
+        讲解建议：这里的数量不是最终依赖数量，而是候选证据数量。尤其 642 条 identity candidate 是弱候选，后续还需要 alias refinement 和执行验证。
+      </p>
+    </figure>
+
+    <h3>4.1 Phase 1：静态事实抽取层</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>能力</th>
+          <th>当前状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>LLVM 21.1.8 + SVF 链路</td>
+          <td>已跑通，SVF commit 为 <code>9e04f986</code></td>
+        </tr>
+        <tr>
+          <td><code>call_fact</code> / <code>access_fact</code></td>
+          <td>已输出 JSONL，并通过 schema validation</td>
+        </tr>
+        <tr>
+          <td>DWARF 字段符号化</td>
+          <td>已支持普通 struct GEP 和 i8 byte-offset GEP</td>
+        </tr>
+        <tr>
+          <td>BTF cross-check</td>
+          <td>已完成 smoke，case1/case2 offset match</td>
+        </tr>
+        <tr>
+          <td>primitive summary</td>
+          <td>已覆盖 alloc/free/usercopy/refcount/percpu_ref 等第一批语义</td>
+        </tr>
+        <tr>
+          <td>wrapper propagation</td>
+          <td>tiny case 已完成，kernel wrapper 暂缓</td>
+        </tr>
+        <tr>
+          <td>SQLite ingestion</td>
+          <td>已完成，当前导入 <code>753 access_fact + 189 call_fact</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>4.2 Phase 2A / 2B：候选证据图</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>边类型</th>
+          <th>含义</th>
+          <th>当前数量</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>state_write_read_candidate</code></td>
+          <td>同一 symbolic field 先写后读，是状态耦合候选，不是显式依赖</td>
+          <td>272</td>
+        </tr>
+        <tr>
+          <td><code>lifecycle_candidate</code></td>
+          <td>alloc/free 在局部上下文中成对出现，仍需对象身份 refinement</td>
+          <td>6</td>
+        </tr>
+        <tr>
+          <td><code>object_identity_candidate</code></td>
+          <td>同函数、同 bitcode、同 symbolic object prefix 的弱同对象候选</td>
+          <td>642</td>
+        </tr>
+        <tr>
+          <td><code>explicit_dependency_candidate</code></td>
+          <td>目前仅来自 alloc-before-free 生命周期候选</td>
+          <td>6</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 局部案例 1：生命周期候选依赖</h2>
+    <p>
+      第一个例子来自 <code>io_uring/kbuf.c</code> 中的 <code>io_provide_buffers</code>。
+      抽取器识别到了分配和释放语义，Phase 2B 将生命周期候选提升为 <code>explicit_dependency_candidate</code>。
+    </p>
+
+    <figure>
+      <img src="02_lifecycle_io_provide_buffers.svg" alt="io_provide_buffers lifecycle graph">
+      <figcaption>图 3：<code>io_provide_buffers</code> 中 alloc/free 形成的显式依赖候选。</figcaption>
+      <p class="talk">
+        讲解建议：这张图说明目前已经能从 primitive summary 中抽出生命周期语义，并把它组织成候选 producer-consumer 边。
+        但仍然标注为 candidate，因为真正对象身份还没有做 alias closure。
+      </p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>6. 局部案例 2：字段状态耦合候选</h2>
+    <p>
+      第二个例子是 <code>io_timeout.off</code>。
+      在 <code>timeout.c:480</code> 处有写入，在后续路径中有读取。这个关系不是显式资源依赖，而是对象字段状态的先后耦合。
+    </p>
+
+    <figure>
+      <img src="03_state_io_timeout_off.svg" alt="io_timeout.off state graph">
+      <figcaption>图 4：<code>io_timeout.off</code> 写后读形成的状态候选边。</figcaption>
+      <p class="talk">
+        讲解建议：这里要强调纪律：<code>write -> read</code> 不直接等价于显式依赖。
+        它只是后续 branch/gate 分析要使用的状态候选证据。
+      </p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>7. 局部案例 3：弱对象身份候选</h2>
+    <p>
+      第三个例子展示 <code>io_kiocb</code> 相关字段。Phase 2B 会把同一函数内共享 symbolic object prefix 的访问组织成
+      <code>object_identity_candidate</code>，但当前底层 <code>base_object</code> 仍多为 synthetic stub，因此这些边都是低置信候选。
+    </p>
+
+    <figure>
+      <img src="04_identity_io_kiocb.svg" alt="io_kiocb identity candidates">
+      <figcaption>图 5：<code>io_kiocb</code> 字段之间的弱对象身份候选。</figcaption>
+      <p class="talk">
+        讲解建议：这张图适合向老师说明“为什么我们现在不声称 final dependency”。
+        当前只是把可能同属一个对象的字段访问拉到一起，后续还要靠 alias fact、entry context 和执行验证收紧。
+      </p>
+    </figure>
+  </section>
+
+  <section>
+    <h2>8. 当前验证结果</h2>
+    <pre>Phase 1 regression:
+tiny facts:     66
+timeout facts:  341
+cancel facts:   142
+kbuf facts:     393
+BTF smoke:      match
+[phase1] ALL PASS
+
+SQLite ingestion:
+access_fact = 753
+call_fact   = 189
+
+Phase 2B graph smoke:
+access nodes = 753
+state_write_read_candidate = 272
+lifecycle_candidate = 6
+object_identity_candidate = 642
+explicit_dependency_candidate = 6
+
+Python tests:
+15 passed</pre>
+  </section>
+
+  <section>
+    <h2>9. 当前边界和下一步</h2>
+    <div class="warning">
+      当前成果已经完成“事实抽取 → SQLite 证据库 → 候选证据图”的闭环，但还不是完整隐式依赖建模系统。
+      特别是 <code>object_identity_candidate</code> 仍是弱候选，不能当成最终 alias 结果。
+    </div>
+
+    <h3>还没有完成的关键项</h3>
+    <ul>
+      <li><code>alias_fact</code> 的真实 SVF points-to 产出。</li>
+      <li><code>entry_fact</code>，尤其是 io_uring worker、task_work、completion、timeout/cancel 等异步入口。</li>
+      <li><code>branch_fact</code> / <code>gate_seed_fact</code>，用于定位目标状态门控分支。</li>
+      <li>对象身份闭包和显式依赖的最终确认。</li>
+      <li>LLM 受限判读、syzkaller 映射和执行反馈。</li>
+    </ul>
+
+    <h3>建议下一阶段</h3>
+    <ol>
+      <li>优先做 <code>branch_fact/gate_seed_fact</code> 的最小闭环，选一个具体 io_uring 深层分支作为目标。</li>
+      <li>补充对象身份 refinement，至少把 allocation/global/formal_param/synthetic 的边界真正利用起来。</li>
+      <li>在证据图上做一次小规模人工审计，评估当前 candidate precision。</li>
+      <li>之后再引入 LLM，只让它在证据库切片内做受限判读。</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>10. 组会讲解顺序建议</h2>
+    <ol>
+      <li>先讲问题：隐式依赖隐藏在内核对象字段状态中。</li>
+      <li>再讲调研结论：为什么需要 LLVM IR + SVF，而不是源码规则或重型符号执行直接上。</li>
+      <li>展示图 1：说明整体工程路线已经从 bitcode 跑到候选证据图。</li>
+      <li>展示图 2：说明当前规模和候选边类型。</li>
+      <li>展示图 3：说明生命周期显式依赖候选。</li>
+      <li>展示图 4：说明字段状态耦合候选。</li>
+      <li>展示图 5：说明对象身份候选仍是弱候选，所以后续要做 refinement。</li>
+      <li>最后讲下一步：branch/gate seed 和对象身份 refinement。</li>
+    </ol>
+  </section>
+</main>
+</body>
+</html>
