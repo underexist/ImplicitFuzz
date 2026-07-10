@@ -5,10 +5,13 @@
   "properties": {
     "entry_kind": {
       "type": "string",
-      "enum": ["syscall", "file_op", "callback", "workqueue", "ioctl", "uring_cmd", "task_work", "io_worker", "sqpoll_thread", "completion_path", "timeout_callback", "cancel_path"]
+      "enum": ["syscall", "file_op", "callback", "workqueue", "ioctl", "uring_cmd", "task_work", "io_worker", "sqpoll_thread", "completion_path", "timeout_callback", "cancel_path", "op_dispatch"]
     },
     "entry_symbol": { "type": "string" },
-    "associated_syscall": { "type": ["string", "null"] }
+    "associated_syscall": { "type": ["string", "null"] },
+    "dispatch_table": { "type": ["string", "null"], "description": "const 分发表全局名,如 io_op_defs" },
+    "dispatch_index": { "type": ["integer", "null"], "description": "表内下标 = opcode" },
+    "dispatch_role": { "type": ["string", "null"], "description": "handler 角色(DWARF 成员名),如 issue/prep/cleanup" }
   },
   "required": ["entry_kind", "entry_symbol"]
 }
