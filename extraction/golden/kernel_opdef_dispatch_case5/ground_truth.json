@@ -1,0 +1,16 @@
+{
+  "case": "kernel_opdef_dispatch_case5",
+  "tu": "io_uring/opdef.c",
+  "dispatch_table": "io_op_defs",
+  "min_opcodes": 49,
+  "note": "io_op_defs is `external [0 x ...]` in io_uring.c (per-TU unresolvable); its constant initializer in opdef.c is fully readable. Roles from DWARF by byte offset. opcode 22 = IORING_OP_READ_FIXED, the design's motivating state-gate example.",
+  "expected": [
+    { "index": 0, "role": "issue", "symbol": "io_nop" },
+    { "index": 0, "role": "prep", "symbol": "io_nop_prep" },
+    { "index": 1, "role": "issue", "symbol": "io_read" },
+    { "index": 1, "role": "prep", "symbol": "io_prep_rw" },
+    { "index": 2, "role": "issue", "symbol": "io_write" },
+    { "index": 22, "role": "issue", "symbol": "io_read" },
+    { "index": 22, "role": "prep", "symbol": "io_prep_rw" }
+  ]
+}

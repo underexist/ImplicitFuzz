@@ -12,10 +12,12 @@ SVF_DIR="${SVF_DIR:-/home/xujunru/implicitfuzz-toolchain/SVF}"
 BC_TIMEOUT="${BC_TIMEOUT:-/tmp/io_uring_timeout.bc}"
 BC_CANCEL="${BC_CANCEL:-/tmp/io_uring_cancel.bc}"
 BC_KBUF="${BC_KBUF:-/tmp/io_uring_kbuf.bc}"
+BC_OPDEF="${BC_OPDEF:-/tmp/io_uring_opdef.bc}"
 
 OUT_TIMEOUT="${OUT_TIMEOUT:-/tmp/io_uring_timeout.facts.jsonl}"
 OUT_CANCEL="${OUT_CANCEL:-/tmp/io_uring_cancel.facts.jsonl}"
 OUT_KBUF="${OUT_KBUF:-/tmp/io_uring_kbuf.facts.jsonl}"
+OUT_OPDEF="${OUT_OPDEF:-/tmp/io_uring_opdef.facts.jsonl}"
 OUT_TINY="${OUT_TINY:-${EXTRACTION}/build/golden-facts.jsonl}"
 
 FAILURES=0
@@ -89,6 +91,14 @@ else
     bash "${SCRIPTS}/run_kernel_case3.sh" "${BC_KBUF}" "${OUT_KBUF}"
 fi
 
+if [[ ! -f "${BC_OPDEF}" ]]; then
+  echo "[phase1] FAIL: missing bitcode ${BC_OPDEF}" >&2
+  FAILURES=$((FAILURES + 1))
+else
+  run_step "kernel case5 (opdef.c const dispatch table)" \
+    bash "${SCRIPTS}/run_kernel_case5.sh" "${BC_OPDEF}" "${OUT_OPDEF}"
+fi
+
 log_step "BTF layout smoke (optional)"
 if [[ -f "${BTF_PATH}" ]]; then
   if python3 "${SCRIPTS}/check_btf_layout.py" \
@@ -123,6 +133,7 @@ echo "tiny facts:          $(count_facts "${OUT_TINY}")"
 echo "timeout facts:       $(count_facts "${OUT_TIMEOUT}")"
 echo "cancel facts:        $(count_facts "${OUT_CANCEL}")"
 echo "kbuf facts:          $(count_facts "${OUT_KBUF}")"
+echo "opdef facts:         $(count_facts "${OUT_OPDEF}")"
 echo "BTF smoke:           ${BTF_STATUS}"
 echo "SVF commit:          $(svf_commit)"
 

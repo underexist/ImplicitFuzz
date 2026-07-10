@@ -15,6 +15,7 @@
 #include "WPA/Andersen.h"
 
 #include "llvm/IR/Argument.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Instruction.h"
@@ -276,6 +277,29 @@ static std::string commonEnvelopeJson(const RunMetadata& runMeta,
         << "\"bc_unit\":\"" << jsonEscape(runMeta.bcUnit) << "\","
         << "\"function\":\"" << jsonEscape(function) << "\","
         << "\"source_location\":" << sourceLocSchemaJson(inst) << ","
+        << "\"primary_provenance\":\"" << primaryProvenance << "\","
+        << "\"provenance\":" << provenanceArrayJson(provenance) << ","
+        << "\"confidence\":\"" << confidence.label << "\","
+        << "\"confidence_score\":" << confidence.score;
+    return oss.str();
+}
+
+// Envelope for facts with no instruction anchor (e.g. entry_fact read from a
+// module-level const dispatch table). source_location is null (schema allows).
+static std::string commonEnvelopeNoInstJson(const RunMetadata& runMeta,
+                                            const std::string& function,
+                                            const std::string& primaryProvenance,
+                                            const std::vector<std::string>& provenance,
+                                            const SchemaConfidence& confidence)
+{
+    std::ostringstream oss;
+    oss << "\"schema_version\":\"1.0.0\","
+        << "\"kernel_version\":\"" << jsonEscape(runMeta.kernelVersion) << "\","
+        << "\"llvm_version\":\"" << jsonEscape(runMeta.llvmVersion) << "\","
+        << "\"opt_level\":\"" << jsonEscape(runMeta.optLevel) << "\","
+        << "\"bc_unit\":\"" << jsonEscape(runMeta.bcUnit) << "\","
+        << "\"function\":\"" << jsonEscape(function) << "\","
+        << "\"source_location\":null,"
         << "\"primary_provenance\":\"" << primaryProvenance << "\","
         << "\"provenance\":" << provenanceArrayJson(provenance) << ","
         << "\"confidence\":\"" << confidence.label << "\","
@@ -1854,6 +1878,117 @@ static void writeAliasFact(std::ofstream& out, const RunMetadata& runMeta,
         << "}\n";
 }
 
+static void writeEntryFact(std::ofstream& out, const RunMetadata& runMeta,
+                           const std::string& tableName, const std::string& entrySymbol,
+                           const std::string& role, long long index,
+                           const std::string& opcodeName)
+{
+    const SchemaConfidence confidence = schemaConfidenceFromScore(0.95);
+    const std::vector<std::string> provenance = {"dwarf"};
+    out << "{"
+        << "\"fact_type\":\"entry_fact\","
+        << commonEnvelopeNoInstJson(runMeta, tableName, "dwarf", provenance, confidence) << ","
+        << "\"entry_kind\":\"op_dispatch\","
+        << "\"entry_symbol\":\"" << jsonEscape(entrySymbol) << "\","
+        << "\"associated_syscall\":"
+        << (opcodeName.empty() ? "null" : "\"" + jsonEscape(opcodeName) + "\"") << ","
+        << "\"dispatch_table\":\"" << jsonEscape(tableName) << "\","
+        << "\"dispatch_index\":" << index << ","
+        << "\"dispatch_role\":\"" << jsonEscape(role) << "\""
+        << "}\n";
+}
+
+static const Function* asFunctionTarget(const Constant* c)
+{
+    if (!c)
+        return nullptr;
+    return SVFUtil::dyn_cast<Function>(c->stripPointerCasts());
+}
+
+// The array element type of a const dispatch table is often an anonymous/
+// literal LLVM struct (no `%struct.name`), so the struct name -- and thus the
+// DWARF member names for role labeling -- can't come from the LLVM type. Get
+// the element struct's DICompositeType from the global variable's own DWARF
+// debug info instead: global var type is `[N x elem]`, whose base type is the
+// element struct composite.
+static const DICompositeType* dispatchElementComposite(const GlobalVariable& gv)
+{
+    SmallVector<DIGlobalVariableExpression*, 1> gves;
+    gv.getDebugInfo(gves);
+    for (DIGlobalVariableExpression* gve : gves)
+    {
+        const DIGlobalVariable* var = gve->getVariable();
+        if (!var)
+            continue;
+        const auto* arrTy = dyn_cast_or_null<DICompositeType>(var->getType());
+        if (!arrTy || arrTy->getTag() != dwarf::DW_TAG_array_type)
+            continue;
+        // Array element base type is often const-qualified (`const struct T[]`);
+        // strip const/volatile before casting to the element composite.
+        const DIType* base = stripDwarfQualifiers(arrTy->getBaseType());
+        if (const auto* st = dyn_cast_or_null<DICompositeType>(base))
+            return st;
+    }
+    return nullptr;
+}
+
+// Read constant function-pointer dispatch tables (e.g. io_uring's io_op_defs)
+// and emit one entry_fact per (element index = opcode, function-pointer field)
+// with a real Function target. This resolves the opcode->handler mapping that
+// is otherwise an indirect call unresolvable per-TU (io_op_defs is `external`
+// in io_uring.c; here in opdef.c its constant initializer is fully readable).
+// Field roles (issue/prep/cleanup/...) come from DWARF by byte offset, so
+// struct padding/bitfields do not misalign them.
+static void scanDispatchTables(std::ofstream& out, const RunMetadata& runMeta,
+                               Module& mod, const DwarfStructIndex& dwarfIndex,
+                               uint64_t& entryFactCount)
+{
+    const DataLayout& dl = mod.getDataLayout();
+    for (GlobalVariable& gv : mod.globals())
+    {
+        if (!gv.isConstant() || !gv.hasInitializer())
+            continue;
+        const auto* arr = SVFUtil::dyn_cast<ConstantArray>(gv.getInitializer());
+        if (!arr)
+            continue;
+        auto* elemStruct = SVFUtil::dyn_cast<StructType>(arr->getType()->getElementType());
+        if (!elemStruct)
+            continue;
+        const std::string tableName = gv.getName().str();
+        const DICompositeType* composite = dispatchElementComposite(gv);
+        if (!composite)
+            composite = dwarfIndex.lookup(structTypeBaseName(elemStruct));
+        const StructLayout* layout = dl.getStructLayout(elemStruct);
+
+        for (unsigned e = 0; e < arr->getNumOperands(); ++e)
+        {
+            const auto* elem = SVFUtil::dyn_cast<ConstantStruct>(arr->getOperand(e));
+            if (!elem)
+                continue;
+            for (unsigned f = 0; f < elem->getNumOperands(); ++f)
+            {
+                const Function* fn = asFunctionTarget(elem->getOperand(f));
+                if (!fn)
+                    continue;
+                const uint64_t byteOffset = layout->getElementOffset(f);
+                std::string role;
+                if (composite)
+                {
+                    const std::optional<DwarfMemberInfo> member =
+                        dwarfMemberInfoByByteOffset(composite, byteOffset);
+                    if (member.has_value())
+                        role = member->name;
+                }
+                if (role.empty())
+                    role = "byte" + std::to_string(byteOffset);
+                writeEntryFact(out, runMeta, tableName, fn->getName().str(), role,
+                               (long long)e, /*opcodeName=*/"");
+                ++entryFactCount;
+            }
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     std::vector<std::string> moduleNameVec =
@@ -1929,6 +2064,11 @@ int main(int argc, char** argv)
     uint64_t aliasFactCount = 0;
     uint64_t indirectCallFacts = 0;
     uint64_t indirectCallResolvedFacts = 0;
+    uint64_t entryFactCount = 0;
+
+    for (Module& mod : llvmMS->getLLVMModules())
+        scanDispatchTables(out, runMeta, mod, dwarfIndex, entryFactCount);
+    factCount += entryFactCount;
 
     WrapperSummaryIndex wrapperIndex;
     if (primitiveIndex.size() > 0)
@@ -2094,6 +2234,8 @@ int main(int argc, char** argv)
               << aliasFactCount << "\n";
     std::cout << "[implicitfuzz-extract] indirect call_fact: " << indirectCallFacts
               << " (resolved to >=1 candidate: " << indirectCallResolvedFacts << ")\n";
+    std::cout << "[implicitfuzz-extract] entry_fact (const dispatch table) hits: "
+              << entryFactCount << "\n";
 
     delete vfg;
     AndersenWaveDiff::releaseAndersenWaveDiff();
