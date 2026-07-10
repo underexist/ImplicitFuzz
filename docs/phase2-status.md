@@ -7,7 +7,68 @@ This branch builds **研究内容一** of the design (`docs/purpose.md`): the tr
 
 ---
 
-## Timeline (18 commits)
+## 代码功能总结 (What the code does, by component)
+
+### End-to-end pipeline
+
+```
+kernel .c ──(Kbuild .o.cmd)──> clang -emit-llvm -O2 -g ──> .bc
+  ──> implicitfuzz-extract  (C++, SVF/LLVM-21)     ──> JSONL facts (6 types)
+  ──> validate_facts_schema.py                     ──> schema-valid facts
+  ──> ingestion/ingest.py::ingest_jsonl            ──> SQLite (per-fact-type tables)
+  ──> evidence/graph.py::build_evidence_graph      ──> evidence_node/edge (candidate edges)
+  ──> evidence/gates.py::derive_gate_seed_candidates ──> gate_seed_candidate
+  ──> ingestion/queries.py · query_phase1_db.py · report_*  ──> inspection
+```
+
+### 1. Static extractor — `extraction/src/implicitfuzz-extract.cpp` (~2360 lines, per-`.bc`)
+
+Builds SVF Andersen points-to + SVFG over one bitcode unit, then emits facts:
+
+| Emitter | Produces |
+|---|---|
+| `writeCallFact` / `writeIndirectCallFact` | call graph — direct calls; indirect calls resolved via SVF's own indirect call graph (`getIndCSCallees`), mostly unresolved per-TU |
+| `writeAccessFact` | field accesses (load/store) with DWARF symbolization (struct GEP + `i8` byte-offset); primitive alloc/free/free_async/usercopy/refcount hits; one-hop wrapper propagation |
+| `resolveBaseObjectDirect` (tier-1) + `resolveBaseObjectViaPointsTo` (tier-2) | object identity for each access — global / formal_param / allocation_site, refined by Andersen points-to |
+| `writeAliasFact` | multi-object Andersen points-to sets (`pta_kind=andersen`) |
+| `scanDispatchTables` / `writeEntryFact` | reads const function-pointer dispatch tables (`io_op_defs`) → opcode→handler `entry_fact`; roles from DWARF by byte offset |
+| `collectConditionLoads` / `writeBranchFact` | conditional/switch branches → gated object fields via bounded branch-local backward slice |
+
+Supporting indices: `PrimitiveSummaryIndex` (semantic dictionary of alloc/free/… callees), `WrapperSummaryIndex` (one-hop alloc/free wrappers), `DwarfStructIndex` (DWARF struct/member resolution, incl. byte-offset + const-qualified array element types).
+
+### 2. Ingestion — `src/implicitfuzz/ingestion/`
+
+- `ingest.py::ingest_jsonl` — JSON-Schema-validated JSONL → SQLite; one table per fact type; nested structures stored as JSON columns; fact types auto-discovered from the schema dir.
+- `queries.py` — read-only query API: `list_symbolic_accesses`, `list_lifecycle_ops`, `list_accesses_by_field`, `export_summary`.
+
+### 3. Evidence graph derivation — `src/implicitfuzz/evidence/graph.py`
+
+`build_evidence_graph` derives access nodes + four candidate edge kinds:
+`derive_state_flow_edges` (write→read coupling on a field), `derive_lifecycle_edges` (alloc≺free same function), `derive_object_identity_edges` (same-function symbolic prefix) + `derive_pointsto_identity_edges` (Andersen points-to intersection, cross-function), `derive_explicit_dependency_edges` (alloc≺free promoted). All are **candidates**, not final dependencies.
+
+### 4. State-gate derivation — `src/implicitfuzz/evidence/gates.py`
+
+`derive_gate_seed_candidates` — for each `branch_fact` gated on a *written* (state-carrier) field, emits a `gate_seed_candidate` (target function, gated fields, related objects/access facts, static predicate summary). Low-confidence static skeletons awaiting LLM predicate inference.
+
+### 5. Schema — `extraction/schema/`
+
+6 fact schemas (`entry`/`call`/`access`/`alias`/`branch`/`gate_seed`) + `common` envelope; `primitive_summary` semantic dictionary; `manifest`/`run_profile`.
+
+### 6. Regression, smoke & tooling — `extraction/scripts/`, `tests/`
+
+- Regression: `run_phase1_regression.sh` (tiny golden + kernel case1/2/3/5 + BTF layout smoke); per-case golden checkers; `validate_facts_schema.py`, `validate_primitive_summary.py`.
+- Smoke/pipeline: `ingest_phase1_smoke.py`, `build_evidence_graph_smoke.py`.
+- Inspection: `query_phase1_db.py`, `report_call_summary.py`.
+- `pytest`: 23 tests (evidence graph, gate seeds, ingestion, entry_fact schema).
+
+### Capability snapshot
+
+- **Can now:** per-TU field-level access facts; object identity (access-path + points-to/container tiers); call graph incl. indirect (per-TU); opcode→handler attribution (io_uring); state-gate anchors (branch ↔ field ↔ object).
+- **Cannot yet:** cross-TU / whole-program closure; fd-indirection identity tier; LLM predicate inference; 反查 (gated field → prior write call); generation / execution verification (研究内容二).
+
+---
+
+## Timeline (19 commits + this doc)
 
 | Phase / theme | What | Commits | Doc |
 |---|---|---|---|
