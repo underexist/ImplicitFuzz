@@ -141,7 +141,11 @@ def check_facts(facts: list[dict]) -> list[str]:
     if not has_node_flags:
         errors.append('missing symbolic_path "Node.flags" with numeric [0,3]')
 
+    # Only call_fact/access_fact carry SVF/ICFG node ids; entry_fact,
+    # branch_fact and alias_fact legitimately do not.
     for fact in facts:
+        if fact.get("fact_type") not in ("call_fact", "access_fact"):
+            continue
         if "svf_node_id" not in fact:
             errors.append("fact missing svf_node_id field")
             break
@@ -287,6 +291,35 @@ def check_facts(facts: list[dict]) -> list[str]:
             f"peek_value base_object {peek_value_site} expected to match "
             f"alloc_node's {alloc_node_site} via tier-2 points-to refinement"
         )
+
+    # branch_fact: the `gated` function's `if (n->flags != 0)` must produce a
+    # branch_fact whose related_loads include a field access to Node.flags.
+    branch_facts = [f for f in facts if f.get("fact_type") == "branch_fact"]
+    id_to_access = {
+        f.get("instruction_id"): f
+        for f in access_facts
+        if f.get("instruction_id")
+    }
+    gated_branches = [f for f in branch_facts if f.get("function") == "gated"]
+    if not gated_branches:
+        errors.append("missing branch_fact in function 'gated'")
+    else:
+        found = False
+        for bf in gated_branches:
+            for load_id in bf.get("related_loads") or []:
+                acc = id_to_access.get(load_id)
+                if acc and (
+                    acc.get("access_path_symbolic") == "Node.flags"
+                    or (acc.get("access_path") or {}).get("symbolic_path") == "Node.flags"
+                ):
+                    found = True
+                    break
+            if found:
+                break
+        if not found:
+            errors.append(
+                "gated branch_fact.related_loads has no access to Node.flags"
+            )
 
     return errors
 

@@ -1989,6 +1989,86 @@ static void scanDispatchTables(std::ofstream& out, const RunMetadata& runMeta,
     }
 }
 
+// Branch-local backward slice: collect LoadInsts feeding a branch/switch
+// condition, within a bounded depth over data operands, stopping at PHIs to
+// stay local (a full cross-block slice is future work per v3 §5.8). The loads
+// tie the branch to the object fields whose state gates it.
+static void collectConditionLoads(const Value* cond, unsigned depth,
+                                  std::unordered_set<const Value*>& seen,
+                                  std::vector<const LoadInst*>& loads)
+{
+    if (depth == 0 || !cond || !seen.insert(cond).second)
+        return;
+    if (const auto* li = SVFUtil::dyn_cast<LoadInst>(cond))
+    {
+        loads.push_back(li);
+        return;
+    }
+    const auto* op = SVFUtil::dyn_cast<Instruction>(cond);
+    if (!op || SVFUtil::isa<PHINode>(op))
+        return;
+    for (const Use& u : op->operands())
+        collectConditionLoads(u.get(), depth - 1, seen, loads);
+}
+
+static std::vector<std::string> successorLabels(const Instruction& term)
+{
+    std::vector<std::string> labels;
+    if (!term.isTerminator())
+        return labels;
+    for (unsigned i = 0; i < term.getNumSuccessors(); ++i)
+    {
+        const BasicBlock* succ = term.getSuccessor(i);
+        std::string name = succ && succ->hasName() ? succ->getName().str() : "";
+        labels.push_back("succ" + std::to_string(i) + (name.empty() ? "" : ":" + name));
+    }
+    return labels;
+}
+
+static std::string truncated(const std::string& s, size_t n)
+{
+    return s.size() <= n ? s : s.substr(0, n) + "...";
+}
+
+static void writeBranchFact(std::ofstream& out, const RunMetadata& runMeta,
+                            const Function& func, const Instruction& inst, uint64_t ordinal,
+                            const Value* cond,
+                            const std::unordered_map<const Instruction*, std::string>& instIdMap)
+{
+    const std::string funcName = func.getName().str();
+    const std::string branchId = instructionId(func, inst, ordinal);
+
+    std::unordered_set<const Value*> seen;
+    std::vector<const LoadInst*> loads;
+    collectConditionLoads(cond, kPointerTraceMaxDepth, seen, loads);
+
+    std::vector<std::string> relatedLoads;
+    std::string firstLoadLoc;
+    for (const LoadInst* li : loads)
+    {
+        const auto it = instIdMap.find(li);
+        if (it != instIdMap.end())
+            relatedLoads.push_back(it->second);
+        if (firstLoadLoc.empty())
+            firstLoadLoc = sourceExpansionKey(*li);
+    }
+    const std::string branchLoc = sourceExpansionKey(inst);
+    const std::string sliceRange =
+        (firstLoadLoc.empty() ? branchLoc : firstLoadLoc) + ".." + branchLoc;
+
+    const SchemaConfidence confidence = schemaConfidenceFromScore(0.9);
+    const std::vector<std::string> provenance = {"svf"};
+    out << "{"
+        << "\"fact_type\":\"branch_fact\","
+        << commonEnvelopeJson(runMeta, funcName, inst, "svf", provenance, confidence) << ","
+        << "\"branch_instruction_id\":\"" << jsonEscape(branchId) << "\","
+        << "\"condition_value\":\"" << jsonEscape(truncated(llvmValueToString(cond), 200)) << "\","
+        << "\"control_deps\":" << stringArrayJson(successorLabels(inst)) << ","
+        << "\"related_loads\":" << stringArrayJson(relatedLoads) << ","
+        << "\"slice_range\":\"" << jsonEscape(sliceRange) << "\""
+        << "}\n";
+}
+
 int main(int argc, char** argv)
 {
     std::vector<std::string> moduleNameVec =
@@ -2065,6 +2145,7 @@ int main(int argc, char** argv)
     uint64_t indirectCallFacts = 0;
     uint64_t indirectCallResolvedFacts = 0;
     uint64_t entryFactCount = 0;
+    uint64_t branchFactCount = 0;
 
     for (Module& mod : llvmMS->getLLVMModules())
         scanDispatchTables(out, runMeta, mod, dwarfIndex, entryFactCount);
@@ -2086,11 +2167,17 @@ int main(int argc, char** argv)
             if (func.isDeclaration())
                 continue;
             uint64_t ordinal = 0;
+            // Instruction -> instruction_id, so branch_fact.related_loads can
+            // reference the same ids that load access_facts carry. Loads feed
+            // conditions from dominating positions, so they are mapped before
+            // their branch is reached in this single forward pass.
+            std::unordered_map<const Instruction*, std::string> instIdMap;
             for (BasicBlock& bb : func)
             {
                 for (Instruction& inst : bb)
                 {
                     ++ordinal;
+                    instIdMap[&inst] = instructionId(func, inst, ordinal);
                     const NodeBinding binding = resolveNodeBinding(inst, llvmMS);
 
                     if (const CallBase* cb = SVFUtil::dyn_cast<CallBase>(&inst))
@@ -2207,6 +2294,23 @@ int main(int argc, char** argv)
                             ++aliasFactCount;
                         }
                     }
+                    else if (const BranchInst* br = SVFUtil::dyn_cast<BranchInst>(&inst))
+                    {
+                        if (br->isConditional())
+                        {
+                            writeBranchFact(out, runMeta, func, inst, ordinal,
+                                            br->getCondition(), instIdMap);
+                            ++factCount;
+                            ++branchFactCount;
+                        }
+                    }
+                    else if (const SwitchInst* sw = SVFUtil::dyn_cast<SwitchInst>(&inst))
+                    {
+                        writeBranchFact(out, runMeta, func, inst, ordinal,
+                                        sw->getCondition(), instIdMap);
+                        ++factCount;
+                        ++branchFactCount;
+                    }
                 }
             }
         }
@@ -2236,6 +2340,8 @@ int main(int argc, char** argv)
               << " (resolved to >=1 candidate: " << indirectCallResolvedFacts << ")\n";
     std::cout << "[implicitfuzz-extract] entry_fact (const dispatch table) hits: "
               << entryFactCount << "\n";
+    std::cout << "[implicitfuzz-extract] branch_fact (conditional/switch) hits: "
+              << branchFactCount << "\n";
 
     delete vfg;
     AndersenWaveDiff::releaseAndersenWaveDiff();

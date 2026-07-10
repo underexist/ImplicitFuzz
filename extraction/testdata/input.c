@@ -27,6 +27,13 @@ static int peek_value(struct Node *n)
     return n->value;
 }
 
+static int gated(struct Node *n)
+{
+    if (n->flags != 0)      /* branch gated on Node.flags */
+        return n->value;
+    return 0;
+}
+
 int accumulate(struct Node *head)
 {
     int sum = 0;
@@ -50,6 +57,7 @@ int main(void)
     b->flags = b->flags | 1UL;
     int sum = accumulate(b);
     sum += peek_value(b);
+    sum += gated(b);
     free_node(b);
     free_node(a);
     return sum;
