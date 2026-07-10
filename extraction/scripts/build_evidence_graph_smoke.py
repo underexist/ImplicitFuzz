@@ -49,11 +49,17 @@ def main() -> int:
         build_evidence_graph,
         summarize_evidence_graph,
     )
+    from implicitfuzz.evidence.gates import (
+        derive_gate_seed_candidates,
+        summarize_gate_seeds,
+    )
 
     conn = sqlite3.connect(str(args.db))
     try:
         counts = build_evidence_graph(conn)
         summary = summarize_evidence_graph(conn)
+        gate_seeds_inserted = derive_gate_seed_candidates(conn)
+        gate_summary = summarize_gate_seeds(conn)
     finally:
         conn.close()
 
@@ -61,6 +67,9 @@ def main() -> int:
     print(json.dumps(counts, indent=2, sort_keys=True))
     print("phase2a evidence graph summary:")
     print(json.dumps(summary, indent=2, sort_keys=True))
+    print(f"gate_seed_candidates inserted this run: {gate_seeds_inserted}")
+    print("gate_seed summary:")
+    print(json.dumps(gate_summary, indent=2, sort_keys=True))
 
     # The builder is idempotent. On a rerun, inserted counts may be zero, so
     # smoke validation must use persisted totals from the summary.
