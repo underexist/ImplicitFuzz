@@ -30,3 +30,23 @@ def build_audit_record(gate_id, bundle, judge_output, validation, score,
         "human_score": human_score,
         "rationale": rationale,
     }
+
+
+def score_terms_relaxed(judge_terms: list[dict], truth_terms: list[dict]) -> dict:
+    """Relaxed lower-bound proxy scores (the pilot found exact-key too strict).
+
+    class_field: match on (class, field_ref), ignoring align_target free text.
+    field_set:   match on field_ref alone, ignoring class and attribution.
+    Human semantic scoring remains the primary metric; these are proxies.
+    """
+    def _pr(jset, tset):
+        matched = jset & tset
+        precision = len(matched) / len(jset) if jset else 0.0
+        recall = len(matched) / len(tset) if tset else 0.0
+        return {"precision": precision, "recall": recall, "matched": len(matched)}
+
+    jcf = {(t.get("class"), t.get("field_ref")) for t in judge_terms}
+    tcf = {(t.get("class"), t.get("field_ref")) for t in truth_terms}
+    jf = {t.get("field_ref") for t in judge_terms}
+    tf = {t.get("field_ref") for t in truth_terms}
+    return {"class_field": _pr(jcf, tcf), "field_set": _pr(jf, tf)}
