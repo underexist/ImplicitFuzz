@@ -150,6 +150,7 @@ git commit -F <msg>   # "feat(schema): additive struct_layout_fact + ingest tabl
 
 **Interfaces:**
 - Produces: 传 `-emit-struct-layout` 时,每 struct×member 一行 `struct_layout_fact`;不传则无输出(回归不变)。
+- **实现补记(执行中发现):** emit **必须递归进匿名 struct/union 成员并按绝对偏移累加**——`nr_user_files` 藏在 `io_ring_ctx` 的匿名 cacheline 对齐子结构里,非递归版只拿到顶层成员会漏它(io_ring_ctx 成员 36→86,`nr_user_files@160`/`nr_user_bufs@164` 才现身)。递归仅对**按值嵌套的 composite**(指针是 DIDerivedType 不递归),必然终止;仍只读 DWARF、不碰 SVF 热路径。见 `emitStructLayoutMembers`。
 
 - [ ] **Step 1: 加 CLI flag**（在 `JsonlOut` 的 `cl::opt` 附近,约 line 46）
 
