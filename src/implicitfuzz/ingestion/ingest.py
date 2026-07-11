@@ -22,6 +22,7 @@ _JSON_COLUMNS = {
     "alias_fact": {"source_location": "source_location_json", "provenance": "provenance_json", "object_id": "object_id_json", "points_to_set": "points_to_set_json"},
     "branch_fact": {"source_location": "source_location_json", "provenance": "provenance_json", "control_deps": "control_deps_json", "related_loads": "related_loads_json"},
     "gate_seed_fact": {"source_location": "source_location_json", "provenance": "provenance_json", "related_objects": "related_objects_json", "related_access_facts": "related_access_facts_json"},
+    "struct_layout_fact": {"source_location": "source_location_json", "provenance": "provenance_json"},
 }
 
 _SCALAR_RENAME = {"schema_version", "kernel_version", "llvm_version", "opt_level", "bc_unit", "function", "primary_provenance", "confidence"}

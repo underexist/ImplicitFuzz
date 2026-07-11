@@ -141,3 +141,23 @@ CREATE TABLE IF NOT EXISTS gate_seed_fact (
   confidence TEXT NOT NULL,
   confidence_score REAL
 );
+
+CREATE TABLE IF NOT EXISTS struct_layout_fact (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  schema_version TEXT NOT NULL,
+  raw_json TEXT NOT NULL,
+  kernel_version TEXT NOT NULL,
+  llvm_version TEXT NOT NULL,
+  opt_level TEXT NOT NULL,
+  bc_unit TEXT NOT NULL,
+  function TEXT NOT NULL,
+  struct_name TEXT NOT NULL,
+  member_name TEXT NOT NULL,
+  byte_offset INTEGER NOT NULL,
+  member_type TEXT NOT NULL,
+  source_location_json TEXT,
+  primary_provenance TEXT NOT NULL,
+  provenance_json TEXT NOT NULL,
+  confidence TEXT NOT NULL,
+  confidence_score REAL
+);

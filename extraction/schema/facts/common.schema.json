@@ -6,7 +6,7 @@
   "properties": {
     "fact_type": {
       "type": "string",
-      "enum": ["entry_fact", "call_fact", "access_fact", "alias_fact", "branch_fact", "gate_seed_fact"]
+      "enum": ["entry_fact", "call_fact", "access_fact", "alias_fact", "branch_fact", "gate_seed_fact", "struct_layout_fact"]
     },
     "schema_version": { "type": "string", "const": "1.0.0" },
     "kernel_version": { "type": "string" },

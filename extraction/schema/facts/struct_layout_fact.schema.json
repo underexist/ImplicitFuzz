@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/schema/facts/struct_layout_fact.schema.json",
+  "allOf": [{ "$ref": "common.schema.json" }],
+  "properties": {
+    "struct_name": { "type": "string" },
+    "member_name": { "type": "string" },
+    "byte_offset": { "type": "integer", "minimum": 0 },
+    "member_type": { "type": "string" }
+  },
+  "required": ["struct_name", "member_name", "byte_offset", "member_type"]
+}
