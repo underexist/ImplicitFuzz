@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+    "target_gate": {
+      "type": "object",
+      "properties": {
+        "bc_unit": { "type": "string" },
+        "function": { "type": "string" },
+        "branch_instruction_id": { "type": "string" }
+      },
+      "required": ["function"]
+    },
+    "terms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "class": { "enum": ["premise", "activation", "param_align"] },
+          "object": { "type": "string" },
+          "field_ref": { "type": "string" },
+          "relation": { "type": "string" },
+          "align_target": { "type": "string" },
+          "source": { "enum": ["slice", "slice+ledger", "inferred"] },
+          "confidence": { "enum": ["high", "medium_high", "medium", "medium_low", "low"] },
+          "uncertain": { "type": "boolean" }
+        },
+        "required": ["class", "object", "field_ref", "relation", "source", "confidence", "uncertain"]
+      }
+    },
+    "abstain": { "type": "boolean" },
+    "alt_candidates": { "type": "array" }
+  },
+  "required": ["target_gate", "terms", "abstain"]
+}
