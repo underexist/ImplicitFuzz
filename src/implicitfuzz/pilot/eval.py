@@ -50,3 +50,20 @@ def score_terms_relaxed(judge_terms: list[dict], truth_terms: list[dict]) -> dic
     jf = {t.get("field_ref") for t in judge_terms}
     tf = {t.get("field_ref") for t in truth_terms}
     return {"class_field": _pr(jcf, tcf), "field_set": _pr(jf, tf)}
+
+
+def human_score_template(judge_terms: list[dict]) -> dict:
+    return {
+        "recovered_required_terms": None,
+        "param_align_correct": "n/a",
+        "has_wrong_term": None,
+        "per_term_verdict": [
+            {"field_ref": t.get("field_ref"), "class": t.get("class"), "verdict": None}
+            for t in judge_terms
+        ],
+        "notes": "",
+    }
+
+
+def sandbox_audit(tool_uses: int) -> dict:
+    return {"clean": tool_uses == 0, "tool_uses": tool_uses}

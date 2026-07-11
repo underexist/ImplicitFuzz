@@ -56,3 +56,24 @@ def test_score_terms_relaxed_field_set_ignores_class():
     r = score_terms_relaxed(judge, truth)
     assert r["class_field"]["matched"] == 0      # class differs
     assert r["field_set"]["matched"] == 1        # field overlaps
+
+
+from implicitfuzz.pilot.eval import human_score_template, sandbox_audit
+
+
+def test_human_score_template_shape():
+    judge = [{"class": "param_align", "field_ref": "io_ring_ctx.nr_user_files"},
+             {"class": "premise", "field_ref": "io_ring_ctx.file_data"}]
+    t = human_score_template(judge)
+    assert t["recovered_required_terms"] is None
+    assert t["param_align_correct"] == "n/a"
+    assert t["has_wrong_term"] is None
+    assert [v["field_ref"] for v in t["per_term_verdict"]] == \
+        ["io_ring_ctx.nr_user_files", "io_ring_ctx.file_data"]
+    assert all(v["verdict"] is None for v in t["per_term_verdict"])
+    assert t["notes"] == ""
+
+
+def test_sandbox_audit():
+    assert sandbox_audit(0) == {"clean": True, "tool_uses": 0}
+    assert sandbox_audit(2) == {"clean": False, "tool_uses": 2}
