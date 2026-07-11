@@ -27,7 +27,8 @@ Phase 2(LLM 判读 + 评测)是**独立后续计划**,不在本计划内。
 
 **Files:**
 - Create: `extraction/schema/facts/struct_layout_fact.schema.json`
-- Modify: `src/implicitfuzz/ingestion/schema.sql`(加 `struct_layout` 表)
+- Modify: `extraction/schema/facts/common.schema.json`（`fact_type` enum 追加 `struct_layout_fact`——注册新 fact 类型必需;additive enum 值,坑#2 允许"只加枚举值",对现有类型零语义改动）
+- Modify: `src/implicitfuzz/ingestion/schema.sql`(加 `struct_layout_fact` 表)
 - Modify: `src/implicitfuzz/ingestion/ingest.py`(`_JSON_COLUMNS` 加一项)
 - Test: `tests/test_struct_layout_ingest.py`
 
