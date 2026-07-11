@@ -47,7 +47,34 @@ Example: `io_disarm_next` gated on `io_kiocb.flags` / `io_kiocb.link` — exactl
 - Tiny golden extended: `gated()`'s `if (n->flags != 0)` → a `branch_fact` whose `related_loads` cross-references an `access_fact` with symbolic `Node.flags`. `check_golden_facts.py`'s node-id assertion scoped to call_fact/access_fact (branch_fact/entry_fact legitimately carry no `svf_node_id`).
 - `run_phase1_regression.sh`: ALL PASS. `pytest`: 23 passed (3 new gate-seed tests). `build_evidence_graph_smoke.py`: derives + reports gate seeds.
 
+## 反查 (gate_prior_write_candidate) — done, symbolic v1
+
+The "先门控、后反查" step is now implemented as a derived table
+`gate_prior_write_candidate` (`src/implicitfuzz/evidence/reverse_lookup.py`).
+For each `gate_seed_candidate` gated field key, it finds every `write`
+`access_fact` with a matching field key **across TU boundaries** (write in
+rsrc.c, gated read in rw.c) and records the prior write site: write
+function, bc_unit, source location, base object, and — only when the write
+function is itself a dispatch handler — an opcode/role attribution (no
+opcode for deep-callee writes, to avoid overclaim). Rows carry
+`basis=symbolic_field_key`, `confidence=medium`, and
+`status=awaiting_llm_predicate_and_execution_verification`.
+
+Matching runs through a shared field-key helper
+(`src/implicitfuzz/evidence/field_key.py`) used by both gate derivation and
+reverse-lookup, so numeric-only fields are not silently dropped at the gate
+side. v1 matches symbolic field keys only; the numeric branch is
+reserved for a follow-up extractor-symbolization upgrade (numeric-only
+access_facts currently carry no struct type, so `ctx->nr_user_files` and
+peers stay unsymbolized until then). See
+`docs/superpowers/specs/2026-07-10-reverse-lookup-gate-prior-write-design.md`
+(§0 决策修订) and the plan under `docs/superpowers/plans/`.
+
+Smoke entry point: `extraction/scripts/build_reverse_lookup_smoke.py`
+(ingest multi-TU facts → gate seeds → reverse lookup; asserts ≥1 cross-TU
+prior write).
+
 ## Next
 
-- 反查: join `gate_seed_candidate` gated fields → write `access_fact`s (cross-TU over the ingested corpus) → candidate prior calls (the implicit prior dependencies).
 - LLM constrained judgement: infer predicate (premise/activation/param-align) per gate under the code slice, with the 3-gate validation (field-existence reconciliation against the fact ledger, schema, synthesizability).
+- Extractor symbolization upgrade: recover `io_ring_ctx.nr_user_files`/`file_table` etc. from numeric-only to symbolic, so the flagship `sqe->buf_index < ctx->nr_user_files` gate reverse-looks-up end-to-end.

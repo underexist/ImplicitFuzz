@@ -139,6 +139,7 @@ Derived edge kinds:
 | `extraction/scripts/ingest_phase1_smoke.py` | SQLite ingest + query smoke | No (requires Phase 1 JSONL) |
 | `extraction/scripts/query_phase1_db.py` | Read-only SQLite evidence queries | No (requires `/tmp/phase1_facts.db`) |
 | `extraction/scripts/build_evidence_graph_smoke.py` | Phase 2A evidence graph seeds | No (requires `/tmp/phase1_facts.db`, creates it if missing) |
+| `extraction/scripts/build_reverse_lookup_smoke.py` | gate→prior-write cross-TU reverse lookup (`gate_prior_write_candidate`) | No (requires multi-TU facts JSONL, e.g. rsrc + rw) |
 | `extraction/scripts/run_golden_test.sh` | Tiny userland case (`testdata/input.c`) | Yes (compiles `.bc`) |
 | `extraction/scripts/run_kernel_case1.sh` | Kernel `io_uring/timeout.c` smoke | No (requires prebuilt `.bc`) |
 | `extraction/scripts/run_kernel_case2.sh` | Kernel `io_uring/cancel.c` struct GEP | No (requires prebuilt `.bc`) |
