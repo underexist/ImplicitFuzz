@@ -47,6 +47,11 @@ static const Option<std::string> JsonlOut(
     "Path for JSONL facts output",
     "implicitfuzz-facts.jsonl");
 
+static const Option<bool> EmitStructLayout(
+    "emit-struct-layout",
+    "Emit struct_layout_fact rows (offset->member) from DWARF; off by default",
+    false);
+
 static const Option<std::string> PrimitiveSummaryPath(
     "primitive-summary",
     "Path to primitive_summary.json",
@@ -991,6 +996,11 @@ public:
         return it->second;
     }
 
+    const std::unordered_map<std::string, const DICompositeType*>& structs() const
+    {
+        return byName_;
+    }
+
 private:
     std::unordered_map<std::string, const DICompositeType*> byName_;
 };
@@ -1898,6 +1908,76 @@ static void writeEntryFact(std::ofstream& out, const RunMetadata& runMeta,
         << "}\n";
 }
 
+// Recursively emit struct_layout_fact rows for one composite's members at
+// absolute byte offsets. Anonymous (nameless) struct/union members -- e.g.
+// io_uring's ____cacheline_aligned_in_smp anon groups -- are recursed into so
+// their leaf fields (like io_ring_ctx.nr_user_files) surface with absolute
+// offsets rather than being skipped. Recursion terminates: only by-value
+// nested composites recurse (pointers are DIDerivedType, not composites).
+static void emitStructLayoutMembers(std::ofstream& out, const RunMetadata& runMeta,
+                                    const SchemaConfidence& confidence,
+                                    const std::vector<std::string>& provenance,
+                                    const std::string& structName,
+                                    const DICompositeType* composite,
+                                    uint64_t baseByteOffset,
+                                    uint64_t& structLayoutFactCount)
+{
+    for (Metadata* element : composite->getElements())
+    {
+        const auto* member = dyn_cast_or_null<DIDerivedType>(element);
+        if (!member || member->getTag() != dwarf::DW_TAG_member)
+            continue;
+        const uint64_t byteOffset = baseByteOffset + member->getOffsetInBits() / 8;
+        const std::string memberName = member->getName().str();
+        const DIType* baseType = member->getBaseType();
+        const DIType* stripped = stripDwarfQualifiers(baseType);
+        const auto* nested = dyn_cast_or_null<DICompositeType>(stripped);
+        const bool nestedAggregate =
+            nested && (nested->getTag() == dwarf::DW_TAG_structure_type ||
+                       nested->getTag() == dwarf::DW_TAG_union_type);
+        if (memberName.empty())
+        {
+            if (nestedAggregate)
+                emitStructLayoutMembers(out, runMeta, confidence, provenance, structName,
+                                        nested, byteOffset, structLayoutFactCount);
+            continue;
+        }
+        const std::string memberType = renderDwarfTypeNameKeepTypedef(baseType);
+        out << "{"
+            << "\"fact_type\":\"struct_layout_fact\","
+            << commonEnvelopeNoInstJson(runMeta, structName, "dwarf", provenance,
+                                        confidence)
+            << ","
+            << "\"struct_name\":\"" << jsonEscape(structName) << "\","
+            << "\"member_name\":\"" << jsonEscape(memberName) << "\","
+            << "\"byte_offset\":" << byteOffset << ","
+            << "\"member_type\":\"" << jsonEscape(memberType) << "\""
+            << "}\n";
+        ++structLayoutFactCount;
+    }
+}
+
+// Emit struct_layout_fact rows (offset->member) from DWARF for every indexed
+// struct. Read-only DWARF traversal over the DebugInfoFinder-built index --
+// deliberately off the SVF points-to / getLLVMValue() hot path. Gated by the
+// opt-in -emit-struct-layout flag so default runs (regression) are unchanged.
+static void writeStructLayoutFacts(std::ofstream& out, const RunMetadata& runMeta,
+                                   const DwarfStructIndex& dwarfIndex,
+                                   uint64_t& structLayoutFactCount)
+{
+    const SchemaConfidence confidence = schemaConfidenceFromScore(0.98);
+    const std::vector<std::string> provenance = {"dwarf"};
+    for (const auto& entry : dwarfIndex.structs())
+    {
+        const std::string& structName = entry.first;
+        const DICompositeType* composite = entry.second;
+        if (!composite || structName.empty())
+            continue;
+        emitStructLayoutMembers(out, runMeta, confidence, provenance, structName,
+                                composite, 0, structLayoutFactCount);
+    }
+}
+
 static const Function* asFunctionTarget(const Constant* c)
 {
     if (!c)
@@ -2151,6 +2231,11 @@ int main(int argc, char** argv)
         scanDispatchTables(out, runMeta, mod, dwarfIndex, entryFactCount);
     factCount += entryFactCount;
 
+    uint64_t structLayoutFactCount = 0;
+    if (EmitStructLayout())
+        writeStructLayoutFacts(out, runMeta, dwarfIndex, structLayoutFactCount);
+    factCount += structLayoutFactCount;
+
     WrapperSummaryIndex wrapperIndex;
     if (primitiveIndex.size() > 0)
     {
@@ -2340,6 +2425,8 @@ int main(int argc, char** argv)
               << " (resolved to >=1 candidate: " << indirectCallResolvedFacts << ")\n";
     std::cout << "[implicitfuzz-extract] entry_fact (const dispatch table) hits: "
               << entryFactCount << "\n";
+    std::cout << "[implicitfuzz-extract] struct_layout_fact (opt-in): "
+              << structLayoutFactCount << "\n";
     std::cout << "[implicitfuzz-extract] branch_fact (conditional/switch) hits: "
               << branchFactCount << "\n";
 
