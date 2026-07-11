@@ -1,0 +1,9 @@
+{
+  "target_gate": {"bc_unit": "io_uring_rw.pre.bc", "function": "io_prep_rw", "branch_instruction_id": ""},
+  "slice_locations": [
+    {"file_line": "io_uring/rw.c:91", "label": "gate: req->buf_index >= ctx->nr_user_bufs; then ctx->user_bufs[index]"},
+    {"file_line": "io_uring/rsrc.c:1276", "label": "writer: io_sqe_buffers_register loop, ctx->nr_user_bufs++"}
+  ],
+  "ledger_functions": ["io_prep_rw", "io_sqe_buffers_register"],
+  "field_clues": ["req->buf_index", "ctx->nr_user_bufs", "ctx->user_bufs"]
+}

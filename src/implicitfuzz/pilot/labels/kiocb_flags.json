@@ -1,0 +1,9 @@
+{
+  "target_gate": {"bc_unit": "io_uring_io_uring.pre.bc", "function": "__io_req_complete_post"},
+  "terms": [
+    {"class": "premise", "object": "io_kiocb", "field_ref": "io_kiocb.flags",
+     "relation": "req->flags & IO_REQ_LINK_FLAGS (the request was submitted as part of a link chain)",
+     "align_target": "", "source": "slice", "confidence": "high", "uncertain": false}
+  ],
+  "abstain": false, "alt_candidates": []
+}

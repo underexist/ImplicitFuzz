@@ -1,0 +1,10 @@
+{
+  "target_gate": {"bc_unit": "io_uring_io_uring.pre.bc", "function": "io_file_get_fixed", "branch_instruction_id": ""},
+  "slice_locations": [
+    {"file_line": "io_uring/io_uring.c:1856", "label": "gate: fd >= ctx->nr_user_files; then reads ctx->file_table[fd]"},
+    {"file_line": "io_uring/rsrc.c:937", "label": "writer signature: io_sqe_files_register(ctx, arg, nr_args, ...)"},
+    {"file_line": "io_uring/rsrc.c:963", "label": "writer body: allocates file_table / sets file_data; nr_user_files set nearby"}
+  ],
+  "ledger_functions": ["io_file_get_fixed", "io_sqe_files_register"],
+  "field_clues": ["fd", "ctx->nr_user_files", "ctx->file_table"]
+}

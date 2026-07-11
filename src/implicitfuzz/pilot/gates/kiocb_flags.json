@@ -1,0 +1,8 @@
+{
+  "target_gate": {"bc_unit": "io_uring_io_uring.pre.bc", "function": "__io_req_complete_post", "branch_instruction_id": ""},
+  "slice_locations": [
+    {"file_line": "io_uring/io_uring.c:835", "label": "gate: req->flags & IO_REQ_LINK_FLAGS -> disarm/link path"}
+  ],
+  "ledger_functions": ["__io_req_complete_post"],
+  "field_clues": ["req->flags"]
+}
