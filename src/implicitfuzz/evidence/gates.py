@@ -18,6 +18,8 @@ from __future__ import annotations
 import json
 import sqlite3
 
+from implicitfuzz.evidence.field_key import FieldKey, field_key_for_access
+
 
 GATE_SEED_DDL = """
 CREATE TABLE IF NOT EXISTS gate_seed_candidate (
@@ -32,6 +34,8 @@ CREATE TABLE IF NOT EXISTS gate_seed_candidate (
   related_access_facts_json TEXT NOT NULL,
   confidence TEXT NOT NULL,
   status TEXT NOT NULL,
+  gated_field_keys_json TEXT NOT NULL DEFAULT '[]',
+  state_field_keys_json TEXT NOT NULL DEFAULT '[]',
   UNIQUE(bc_unit, function, branch_instruction_id)
 );
 """
@@ -42,27 +46,59 @@ def create_gate_seed_table(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def _state_fields(conn: sqlite3.Connection) -> set[str]:
-    """Symbolic fields that are written somewhere (candidate state carriers)."""
-    rows = conn.execute(
-        "SELECT DISTINCT access_path_symbolic FROM access_fact "
-        "WHERE semantic_op = 'write' AND access_path_symbolic IS NOT NULL"
-    ).fetchall()
-    return {r[0] for r in rows}
+def _state_field_keys(conn: sqlite3.Connection) -> dict[str, FieldKey]:
+    """Field keys of fields written somewhere (candidate state carriers).
+
+    Keyed by FieldKey.key so gate derivation and reverse-lookup agree on
+    field identity. v1 only symbolic writes yield a key (numeric-only writes
+    have no struct type in the facts; field_key_for_access returns None).
+    """
+    out: dict[str, FieldKey] = {}
+    for row in conn.execute(
+        "SELECT id, access_path_symbolic, field_type, numeric_kind, "
+        "access_path_numeric, confidence FROM access_fact WHERE semantic_op = 'write'"
+    ).fetchall():
+        fk = field_key_for_access(
+            access_path_symbolic=row["access_path_symbolic"],
+            field_type=row["field_type"],
+            numeric_kind=row["numeric_kind"],
+            access_path_numeric=row["access_path_numeric"],
+            confidence=row["confidence"] or "low",
+            source_access_fact_id=row["id"],
+        )
+        if fk is not None and fk.key not in out:
+            out[fk.key] = fk
+    return out
+
+
+def _key_dicts(keys: list[FieldKey]) -> str:
+    return json.dumps(
+        [
+            {
+                "kind": k.kind,
+                "key": k.key,
+                "confidence": k.confidence,
+                "source_access_fact_id": k.source_access_fact_id,
+            }
+            for k in keys
+        ],
+        sort_keys=True,
+    )
 
 
 def derive_gate_seed_candidates(conn: sqlite3.Connection) -> int:
     conn.row_factory = sqlite3.Row
     create_gate_seed_table(conn)
 
-    state_fields = _state_fields(conn)
-    if not state_fields:
+    state_field_keys = _state_field_keys(conn)
+    if not state_field_keys:
         return 0
 
     access_by_id = {
         row["instruction_id"]: row
         for row in conn.execute(
-            "SELECT instruction_id, access_path_symbolic, base_object_json "
+            "SELECT id, instruction_id, access_path_symbolic, base_object_json, "
+            "field_type, numeric_kind, access_path_numeric, confidence "
             "FROM access_fact WHERE instruction_id IS NOT NULL"
         ).fetchall()
     }
@@ -79,32 +115,46 @@ def derive_gate_seed_candidates(conn: sqlite3.Connection) -> int:
         if not isinstance(related, list):
             continue
 
-        gated_fields: list[str] = []
+        gated_fields: list[str] = []          # old column: symbolic path strings
+        gated_keys: dict[str, FieldKey] = {}  # new column: field keys
         related_objects: list[str] = []
         related_access_facts: list[str] = []
         for load_id in related:
             acc = access_by_id.get(load_id)
             if acc is None:
                 continue
-            field = acc["access_path_symbolic"]
-            if not field or field not in state_fields:
+            fk = field_key_for_access(
+                access_path_symbolic=acc["access_path_symbolic"],
+                field_type=acc["field_type"],
+                numeric_kind=acc["numeric_kind"],
+                access_path_numeric=acc["access_path_numeric"],
+                confidence=acc["confidence"] or "low",
+                source_access_fact_id=acc["id"],
+            )
+            if fk is None or fk.key not in state_field_keys:
                 continue
-            gated_fields.append(field)
+            gated_keys[fk.key] = fk
             related_access_facts.append(load_id)
+            if acc["access_path_symbolic"]:
+                gated_fields.append(acc["access_path_symbolic"])
             base = acc["base_object_json"]
             if base and base not in related_objects:
                 related_objects.append(base)
 
-        if not gated_fields:
+        if not gated_keys:
             continue
 
-        # Dedup fields while preserving order.
+        # Dedup old-column symbolic fields while preserving order.
         seen: set[str] = set()
         gated_fields = [f for f in gated_fields if not (f in seen or seen.add(f))]
         predicate_summary = (
             f"branch in {br['function']} gated on "
-            + ", ".join(gated_fields)
+            + ", ".join(gated_fields or sorted(gated_keys))
             + " (static skeleton; predicate semantics pending LLM inference)"
+        )
+        gated_field_keys_json = _key_dicts(list(gated_keys.values()))
+        state_field_keys_json = _key_dicts(
+            [state_field_keys[key] for key in gated_keys]
         )
         before = conn.total_changes
         conn.execute(
@@ -112,8 +162,9 @@ def derive_gate_seed_candidates(conn: sqlite3.Connection) -> int:
             INSERT OR IGNORE INTO gate_seed_candidate (
               bc_unit, function, branch_instruction_id, gate_kind,
               predicate_summary, gated_fields_json, related_objects_json,
-              related_access_facts_json, confidence, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+              related_access_facts_json, confidence, status,
+              gated_field_keys_json, state_field_keys_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 br["bc_unit"],
@@ -126,6 +177,8 @@ def derive_gate_seed_candidates(conn: sqlite3.Connection) -> int:
                 json.dumps(related_access_facts, sort_keys=True),
                 "low",
                 "static_skeleton_awaiting_llm_predicate",
+                gated_field_keys_json,
+                state_field_keys_json,
             ),
         )
         if conn.total_changes > before:
