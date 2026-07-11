@@ -1,0 +1,135 @@
+{
+  "gate_id": "fixed_buffer",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_rw.pre.bc",
+      "function": "io_prep_rw",
+      "branch_instruction_id": ""
+    }
+  },
+  "judge_output": {
+    "target_gate": {
+      "bc_unit": "io_uring_rw.pre.bc",
+      "function": "io_prep_rw",
+      "branch_instruction_id": ""
+    },
+    "terms": [
+      {
+        "class": "activation",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.opcode",
+        "relation": "req->opcode == IORING_OP_READ_FIXED || WRITE_FIXED",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "activation",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.buf_index",
+        "relation": "req->buf_index < ctx->nr_user_bufs (branch tests buf_index >= nr_user_bufs)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_bufs",
+        "relation": "ctx->nr_user_bufs > buf_index; set by prior IORING_REGISTER_BUFFERS (io_sqe_buffers_register)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.user_bufs",
+        "relation": "ctx->user_bufs allocated/non-NULL so user_bufs[index] valid",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      },
+      {
+        "class": "param_align",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.buf_index",
+        "relation": "sqe->buf_index must align with a slot registered by prior io_sqe_buffers_register",
+        "align_target": "io_sqe_buffers_register: buffer slot index i (nr_args range)",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": []
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_kiocb.opcode",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 835
+        },
+        {
+          "field_ref": "io_kiocb.buf_index",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 776
+        },
+        {
+          "field_ref": "io_ring_ctx.nr_user_bufs",
+          "status": "confirmed_numeric",
+          "access_fact_id": 1524
+        },
+        {
+          "field_ref": "io_ring_ctx.user_bufs",
+          "status": "confirmed_numeric",
+          "access_fact_id": 1052
+        },
+        {
+          "field_ref": "io_kiocb.buf_index",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 776
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "activation",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "param_align",
+        "synthesizable": true
+      }
+    ]
+  },
+  "score": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "matched": 0,
+    "n_judge": 5,
+    "n_truth": 3
+  },
+  "human_score": null,
+  "rationale": ""
+}

@@ -1,0 +1,123 @@
+{
+  "gate_id": "kiocb_flags",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_io_uring.pre.bc",
+      "function": "__io_req_complete_post",
+      "branch_instruction_id": ""
+    }
+  },
+  "judge_output": {
+    "target_gate": {
+      "bc_unit": "io_uring_io_uring.pre.bc",
+      "function": "__io_req_complete_post",
+      "branch_instruction_id": ""
+    },
+    "terms": [
+      {
+        "class": "activation",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.flags",
+        "relation": "(req->flags & IO_REQ_LINK_FLAGS) != 0 -> enter disarm/link path",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.flags",
+        "relation": "prior submission set IO_REQ_LINK_FLAGS bits (IOSQE_IO_LINK/hardlink at submit)",
+        "align_target": "",
+        "source": "inferred",
+        "confidence": "medium",
+        "uncertain": true
+      },
+      {
+        "class": "premise",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.link",
+        "relation": "req->link non-NULL (linked request chained by prior submission)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.flags",
+        "relation": "req->flags has IO_DISARM_MASK bits set by prior submission (timeout/link-timeout arming)",
+        "align_target": "",
+        "source": "slice",
+        "confidence": "medium",
+        "uncertain": true
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": [
+      {
+        "note": "nested activation flags&IO_DISARM_MASK / link!=NULL"
+      },
+      {
+        "note": "refcount precondition percpu_ref.data"
+      }
+    ]
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_kiocb.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 641
+        },
+        {
+          "field_ref": "io_kiocb.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 641
+        },
+        {
+          "field_ref": "io_kiocb.link",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 765
+        },
+        {
+          "field_ref": "io_kiocb.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 641
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      }
+    ]
+  },
+  "score": {
+    "precision": 0.3333333333333333,
+    "recall": 1.0,
+    "matched": 1,
+    "n_judge": 3,
+    "n_truth": 1
+  },
+  "human_score": null,
+  "rationale": ""
+}

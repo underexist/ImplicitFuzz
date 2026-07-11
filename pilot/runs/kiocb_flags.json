@@ -1,0 +1,58 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_io_uring.pre.bc",
+    "function": "__io_req_complete_post",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "(req->flags & IO_REQ_LINK_FLAGS) != 0 -> enter disarm/link path",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "prior submission set IO_REQ_LINK_FLAGS bits (IOSQE_IO_LINK/hardlink at submit)",
+      "align_target": "",
+      "source": "inferred",
+      "confidence": "medium",
+      "uncertain": true
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.link",
+      "relation": "req->link non-NULL (linked request chained by prior submission)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags has IO_DISARM_MASK bits set by prior submission (timeout/link-timeout arming)",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "medium",
+      "uncertain": true
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": [
+    {
+      "note": "nested activation flags&IO_DISARM_MASK / link!=NULL"
+    },
+    {
+      "note": "refcount precondition percpu_ref.data"
+    }
+  ]
+}

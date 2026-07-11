@@ -1,0 +1,61 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_rw.pre.bc",
+    "function": "io_prep_rw",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.opcode",
+      "relation": "req->opcode == IORING_OP_READ_FIXED || WRITE_FIXED",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.buf_index",
+      "relation": "req->buf_index < ctx->nr_user_bufs (branch tests buf_index >= nr_user_bufs)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_bufs",
+      "relation": "ctx->nr_user_bufs > buf_index; set by prior IORING_REGISTER_BUFFERS (io_sqe_buffers_register)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.user_bufs",
+      "relation": "ctx->user_bufs allocated/non-NULL so user_bufs[index] valid",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.buf_index",
+      "relation": "sqe->buf_index must align with a slot registered by prior io_sqe_buffers_register",
+      "align_target": "io_sqe_buffers_register: buffer slot index i (nr_args range)",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}
