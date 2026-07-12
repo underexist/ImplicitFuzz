@@ -1,0 +1,52 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_msg_ring.pre.bc",
+    "function": "io_msg_ring",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_files",
+      "relation": "nr_user_files > 0 (fixed-file table populated by io_sqe_files_register)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.file_data",
+      "relation": "file_data != NULL",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_msg",
+      "field_ref": "io_msg.src_fd",
+      "relation": "msg->src_fd < ctx->nr_user_files",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_msg",
+      "field_ref": "io_msg.src_fd",
+      "relation": "src_fd must index a valid registered slot",
+      "align_target": "io_ring_ctx.nr_user_files",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

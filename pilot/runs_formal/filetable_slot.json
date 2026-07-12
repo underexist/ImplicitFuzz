@@ -1,0 +1,52 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_filetable.pre.bc",
+    "function": "__io_fixed_fd_install",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.file_data",
+      "relation": "!= NULL",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_files",
+      "relation": "> 0 (prior IORING_REGISTER_FILES)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_files",
+      "relation": "slot_index < ctx->nr_user_files",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_files",
+      "relation": "slot_index < nr_user_files established by prior file registration",
+      "align_target": "nr_user_files",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

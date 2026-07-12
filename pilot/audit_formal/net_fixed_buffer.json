@@ -1,0 +1,188 @@
+{
+  "gate_id": "net_fixed_buffer",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_net.pre.bc",
+      "function": "io_send_zc_prep",
+      "branch_instruction_id": "io_uring/net.c:952"
+    }
+  },
+  "judge_output": {
+    "_tool_uses": 1,
+    "target_gate": {
+      "bc_unit": "io_uring_net.pre.bc",
+      "function": "io_send_zc_prep",
+      "branch_instruction_id": "io_uring/net.c:952"
+    },
+    "terms": [
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_bufs",
+        "relation": "nr_user_bufs > 0 (registered via io_sqe_buffers_register)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.user_bufs",
+        "relation": "user_bufs allocated so user_bufs[idx] valid",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium",
+        "uncertain": true
+      },
+      {
+        "class": "activation",
+        "object": "io_sr_msg",
+        "field_ref": "io_sr_msg.flags",
+        "relation": "(zc->flags & IORING_RECVSEND_FIXED_BUF) != 0",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "activation",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_bufs",
+        "relation": "idx < ctx->nr_user_bufs",
+        "align_target": "",
+        "source": "slice",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "param_align",
+        "object": "io_uring_sqe",
+        "field_ref": "io_uring_sqe.buf_index",
+        "relation": "sqe->buf_index = idx must be < ctx->nr_user_bufs",
+        "align_target": "io_ring_ctx.nr_user_bufs",
+        "source": "slice",
+        "confidence": "high",
+        "uncertain": false
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": []
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_ring_ctx.nr_user_bufs",
+          "status": "confirmed_numeric",
+          "access_fact_id": 1524
+        },
+        {
+          "field_ref": "io_ring_ctx.user_bufs",
+          "status": "confirmed_numeric",
+          "access_fact_id": 1052
+        },
+        {
+          "field_ref": "io_sr_msg.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 3985
+        },
+        {
+          "field_ref": "io_ring_ctx.nr_user_bufs",
+          "status": "confirmed_numeric",
+          "access_fact_id": 1524
+        },
+        {
+          "field_ref": "io_uring_sqe.buf_index",
+          "status": "confirmed_numeric",
+          "access_fact_id": 156
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "param_align",
+        "synthesizable": true
+      }
+    ],
+    "sandbox": {
+      "clean": true,
+      "tool_uses": 1,
+      "allowed": 1
+    }
+  },
+  "score": {
+    "exact": {
+      "precision": 0.2,
+      "recall": 0.3333333333333333,
+      "matched": 1,
+      "n_judge": 5,
+      "n_truth": 3
+    },
+    "relaxed": {
+      "class_field": {
+        "precision": 0.2,
+        "recall": 0.3333333333333333,
+        "matched": 1
+      },
+      "field_set": {
+        "precision": 0.25,
+        "recall": 0.5,
+        "matched": 1
+      }
+    }
+  },
+  "human_score": {
+    "recovered_required_terms": null,
+    "param_align_correct": "n/a",
+    "has_wrong_term": null,
+    "per_term_verdict": [
+      {
+        "field_ref": "io_ring_ctx.nr_user_bufs",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.user_bufs",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_sr_msg.flags",
+        "class": "activation",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.nr_user_bufs",
+        "class": "activation",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_uring_sqe.buf_index",
+        "class": "param_align",
+        "verdict": null
+      }
+    ],
+    "notes": ""
+  },
+  "rationale": "",
+  "unconfirmed_fields": []
+}

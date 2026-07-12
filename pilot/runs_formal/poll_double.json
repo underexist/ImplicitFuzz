@@ -1,0 +1,32 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_poll_remove_entries",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "flags & REQ_F_DOUBLE_POLL != 0",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "REQ_F_DOUBLE_POLL set by prior poll submission",
+      "align_target": "",
+      "source": "inferred",
+      "confidence": "medium",
+      "uncertain": true
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

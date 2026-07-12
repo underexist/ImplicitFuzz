@@ -1,0 +1,164 @@
+{
+  "gate_id": "msg_ring_fixed_file",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_msg_ring.pre.bc",
+      "function": "io_msg_ring",
+      "branch_instruction_id": ""
+    }
+  },
+  "judge_output": {
+    "_tool_uses": 1,
+    "target_gate": {
+      "bc_unit": "io_uring_msg_ring.pre.bc",
+      "function": "io_msg_ring",
+      "branch_instruction_id": ""
+    },
+    "terms": [
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "relation": "nr_user_files > 0 (fixed-file table populated by io_sqe_files_register)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.file_data",
+        "relation": "file_data != NULL",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      },
+      {
+        "class": "activation",
+        "object": "io_msg",
+        "field_ref": "io_msg.src_fd",
+        "relation": "msg->src_fd < ctx->nr_user_files",
+        "align_target": "",
+        "source": "slice",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "param_align",
+        "object": "io_msg",
+        "field_ref": "io_msg.src_fd",
+        "relation": "src_fd must index a valid registered slot",
+        "align_target": "io_ring_ctx.nr_user_files",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": []
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_ring_ctx.nr_user_files",
+          "status": "confirmed_numeric",
+          "access_fact_id": 702
+        },
+        {
+          "field_ref": "io_ring_ctx.file_data",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 1988
+        },
+        {
+          "field_ref": "io_msg.src_fd",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 5333
+        },
+        {
+          "field_ref": "io_msg.src_fd",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 5333
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "param_align",
+        "synthesizable": false
+      }
+    ],
+    "sandbox": {
+      "clean": true,
+      "tool_uses": 1,
+      "allowed": 1
+    }
+  },
+  "score": {
+    "exact": {
+      "precision": 0.25,
+      "recall": 0.3333333333333333,
+      "matched": 1,
+      "n_judge": 4,
+      "n_truth": 3
+    },
+    "relaxed": {
+      "class_field": {
+        "precision": 0.25,
+        "recall": 0.3333333333333333,
+        "matched": 1
+      },
+      "field_set": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "matched": 2
+      }
+    }
+  },
+  "human_score": {
+    "recovered_required_terms": null,
+    "param_align_correct": "n/a",
+    "has_wrong_term": null,
+    "per_term_verdict": [
+      {
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.file_data",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_msg.src_fd",
+        "class": "activation",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_msg.src_fd",
+        "class": "param_align",
+        "verdict": null
+      }
+    ],
+    "notes": ""
+  },
+  "rationale": "",
+  "unconfirmed_fields": []
+}

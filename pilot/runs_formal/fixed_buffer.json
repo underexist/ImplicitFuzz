@@ -1,0 +1,62 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_rw.pre.bc",
+    "function": "io_prep_rw",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_bufs",
+      "relation": "nr_user_bufs > 0 (buffers registered via io_sqe_buffers_register)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.user_bufs",
+      "relation": "user_bufs array populated",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.opcode",
+      "relation": "opcode == READ_FIXED || WRITE_FIXED",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.buf_index",
+      "relation": "buf_index < ctx->nr_user_bufs",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.buf_index",
+      "relation": "sqe->buf_index must align with a registered index",
+      "align_target": "io_ring_ctx.nr_user_bufs",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

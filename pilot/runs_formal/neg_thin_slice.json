@@ -1,0 +1,24 @@
+{
+  "_tool_uses": 1,
+  "_negative_control": true,
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_poll_remove_entries",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "& REQ_F_DOUBLE_POLL != 0",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "medium_high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": [],
+  "_judge_note": "empty ledger/clues; only activation defensible; premise/param_align marked absent"
+}

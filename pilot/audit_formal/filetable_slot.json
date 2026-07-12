@@ -1,0 +1,164 @@
+{
+  "gate_id": "filetable_slot",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_filetable.pre.bc",
+      "function": "__io_fixed_fd_install",
+      "branch_instruction_id": ""
+    }
+  },
+  "judge_output": {
+    "_tool_uses": 1,
+    "target_gate": {
+      "bc_unit": "io_uring_filetable.pre.bc",
+      "function": "__io_fixed_fd_install",
+      "branch_instruction_id": ""
+    },
+    "terms": [
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.file_data",
+        "relation": "!= NULL",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "relation": "> 0 (prior IORING_REGISTER_FILES)",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      },
+      {
+        "class": "activation",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "relation": "slot_index < ctx->nr_user_files",
+        "align_target": "",
+        "source": "slice",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "param_align",
+        "object": "io_ring_ctx",
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "relation": "slot_index < nr_user_files established by prior file registration",
+        "align_target": "nr_user_files",
+        "source": "slice+ledger",
+        "confidence": "medium_high",
+        "uncertain": false
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": []
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_ring_ctx.file_data",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 1988
+        },
+        {
+          "field_ref": "io_ring_ctx.nr_user_files",
+          "status": "confirmed_numeric",
+          "access_fact_id": 702
+        },
+        {
+          "field_ref": "io_ring_ctx.nr_user_files",
+          "status": "confirmed_numeric",
+          "access_fact_id": 702
+        },
+        {
+          "field_ref": "io_ring_ctx.nr_user_files",
+          "status": "confirmed_numeric",
+          "access_fact_id": 702
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      },
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "param_align",
+        "synthesizable": false
+      }
+    ],
+    "sandbox": {
+      "clean": true,
+      "tool_uses": 1,
+      "allowed": 1
+    }
+  },
+  "score": {
+    "exact": {
+      "precision": 0.5,
+      "recall": 1.0,
+      "matched": 2,
+      "n_judge": 4,
+      "n_truth": 2
+    },
+    "relaxed": {
+      "class_field": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "matched": 2
+      },
+      "field_set": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "matched": 2
+      }
+    }
+  },
+  "human_score": {
+    "recovered_required_terms": null,
+    "param_align_correct": "n/a",
+    "has_wrong_term": null,
+    "per_term_verdict": [
+      {
+        "field_ref": "io_ring_ctx.file_data",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "class": "premise",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "class": "activation",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_ring_ctx.nr_user_files",
+        "class": "param_align",
+        "verdict": null
+      }
+    ],
+    "notes": ""
+  },
+  "rationale": "",
+  "unconfirmed_fields": []
+}

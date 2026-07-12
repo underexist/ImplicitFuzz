@@ -1,0 +1,116 @@
+{
+  "gate_id": "poll_double",
+  "bundle": {
+    "target_gate": {
+      "bc_unit": "io_uring_poll.pre.bc",
+      "function": "io_poll_remove_entries",
+      "branch_instruction_id": ""
+    }
+  },
+  "judge_output": {
+    "_tool_uses": 1,
+    "target_gate": {
+      "bc_unit": "io_uring_poll.pre.bc",
+      "function": "io_poll_remove_entries",
+      "branch_instruction_id": ""
+    },
+    "terms": [
+      {
+        "class": "activation",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.flags",
+        "relation": "flags & REQ_F_DOUBLE_POLL != 0",
+        "align_target": "",
+        "source": "slice+ledger",
+        "confidence": "high",
+        "uncertain": false
+      },
+      {
+        "class": "premise",
+        "object": "io_kiocb",
+        "field_ref": "io_kiocb.flags",
+        "relation": "REQ_F_DOUBLE_POLL set by prior poll submission",
+        "align_target": "",
+        "source": "inferred",
+        "confidence": "medium",
+        "uncertain": true
+      }
+    ],
+    "abstain": false,
+    "alt_candidates": []
+  },
+  "validation": {
+    "schema": true,
+    "field_existence": {
+      "passed": true,
+      "per_term": [
+        {
+          "field_ref": "io_kiocb.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 641
+        },
+        {
+          "field_ref": "io_kiocb.flags",
+          "status": "confirmed_symbolic",
+          "access_fact_id": 641
+        }
+      ]
+    },
+    "synthesizability": [
+      {
+        "class": "activation",
+        "synthesizable": false
+      },
+      {
+        "class": "premise",
+        "synthesizable": true
+      }
+    ],
+    "sandbox": {
+      "clean": true,
+      "tool_uses": 1,
+      "allowed": 1
+    }
+  },
+  "score": {
+    "exact": {
+      "precision": 0.5,
+      "recall": 1.0,
+      "matched": 1,
+      "n_judge": 2,
+      "n_truth": 1
+    },
+    "relaxed": {
+      "class_field": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "matched": 1
+      },
+      "field_set": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "matched": 1
+      }
+    }
+  },
+  "human_score": {
+    "recovered_required_terms": null,
+    "param_align_correct": "n/a",
+    "has_wrong_term": null,
+    "per_term_verdict": [
+      {
+        "field_ref": "io_kiocb.flags",
+        "class": "activation",
+        "verdict": null
+      },
+      {
+        "field_ref": "io_kiocb.flags",
+        "class": "premise",
+        "verdict": null
+      }
+    ],
+    "notes": ""
+  },
+  "rationale": "",
+  "unconfirmed_fields": []
+}

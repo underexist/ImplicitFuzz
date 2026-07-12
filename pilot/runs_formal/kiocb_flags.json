@@ -1,0 +1,48 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_io_uring.pre.bc",
+    "function": "__io_req_complete_post",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "(flags & IO_REQ_LINK_FLAGS) != 0",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "IO_REQ_LINK_FLAGS set at submission (REQ_F_LINK/HARDLINK)",
+      "align_target": "",
+      "source": "inferred",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.link",
+      "relation": "link != NULL (linked request chained)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium",
+      "uncertain": true
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": [
+    {
+      "class": "activation",
+      "field_ref": "io_kiocb.flags",
+      "relation": "(flags & IO_DISARM_MASK) != 0"
+    }
+  ]
+}

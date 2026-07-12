@@ -1,0 +1,32 @@
+{
+  "_tool_uses": 1,
+  "target_gate": {
+    "bc_unit": "io_uring_io_uring.pre.bc",
+    "function": "io_prep_async_work",
+    "branch_instruction_id": ""
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags & REQ_F_LINK_TIMEOUT != 0",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "REQ_F_LINK_TIMEOUT set by prior link-timeout submission",
+      "align_target": "",
+      "source": "inferred",
+      "confidence": "medium",
+      "uncertain": true
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

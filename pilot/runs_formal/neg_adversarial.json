@@ -1,0 +1,103 @@
+{
+  "_tool_uses": 1,
+  "_negative_control": true,
+  "_adversarial": true,
+  "target_gate": {
+    "bc_unit": "io_uring_net.pre.bc",
+    "function": "io_send_zc_prep",
+    "branch_instruction_id": "io_uring/net.c:952"
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_uring_sqe",
+      "field_ref": "io_uring_sqe.buf_index",
+      "relation": "idx>=ctx->nr_user_bufs (safe path needs <)",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_bufs",
+      "relation": "> 0 (buffers registered)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_high",
+      "uncertain": true
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.buf_data",
+      "relation": "!= NULL (write at offset 824)",
+      "align_target": "",
+      "source": "ledger",
+      "confidence": "medium_high",
+      "uncertain": false
+    },
+    {
+      "class": "premise",
+      "object": "io_sr_msg",
+      "field_ref": "io_sr_msg.flags",
+      "relation": "& IORING_RECVSEND_FIXED_BUF",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_uring_sqe",
+      "field_ref": "io_uring_sqe.buf_index",
+      "relation": "aligns with registered buffer index",
+      "align_target": "io_ring_ctx.user_bufs[idx]",
+      "source": "slice+ledger",
+      "confidence": "medium",
+      "uncertain": true
+    },
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.user_bufs",
+      "relation": "!= NULL (populated by prior register)",
+      "align_target": "",
+      "source": "inferred",
+      "confidence": "medium_low",
+      "uncertain": true
+    },
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.opcode",
+      "relation": "== SEND_ZC/SENDMSG_ZC",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "low",
+      "uncertain": true
+    },
+    {
+      "class": "premise",
+      "object": "io_sr_msg",
+      "field_ref": "io_sr_msg.notif",
+      "relation": "!= NULL (io_alloc_notif; write at offset 40)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "medium_low",
+      "uncertain": true
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": [
+    {
+      "field_ref": "io_uring_sqe.__pad3",
+      "note": "downstream gate, not target"
+    },
+    {
+      "field_ref": "io_sr_msg.flags",
+      "note": "flag-validity gate above slice"
+    }
+  ]
+}
