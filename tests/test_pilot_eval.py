@@ -75,5 +75,8 @@ def test_human_score_template_shape():
 
 
 def test_sandbox_audit():
-    assert sandbox_audit(0) == {"clean": True, "tool_uses": 0}
-    assert sandbox_audit(2) == {"clean": False, "tool_uses": 2}
+    assert sandbox_audit(0) == {"clean": True, "tool_uses": 0, "allowed": 0}
+    assert sandbox_audit(2) == {"clean": False, "tool_uses": 2, "allowed": 0}
+    # read-single-bundle mechanism: exactly one tool use (the bundle read) allowed
+    assert sandbox_audit(1, allowed=1)["clean"] is True
+    assert sandbox_audit(2, allowed=1)["clean"] is False

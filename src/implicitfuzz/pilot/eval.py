@@ -65,5 +65,9 @@ def human_score_template(judge_terms: list[dict]) -> dict:
     }
 
 
-def sandbox_audit(tool_uses: int) -> dict:
-    return {"clean": tool_uses == 0, "tool_uses": tool_uses}
+def sandbox_audit(tool_uses: int, allowed: int = 0) -> dict:
+    """Cold-judge isolation audit. `allowed` = number of tool uses the protocol
+    permits: 0 for strictly-inline bundles, 1 for the read-single-bundle-file
+    mechanism (exactly the bundle read, nothing else). clean = no unexpected tools.
+    """
+    return {"clean": tool_uses <= allowed, "tool_uses": tool_uses, "allowed": allowed}
