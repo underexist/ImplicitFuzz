@@ -39,3 +39,17 @@
 - 让 `io_import_fixed` 真同步执行(核对 io_uring_enter 是否真跑完读/写 op),把验证推到更深的导入分支;
 - OOB buf_index 版负控(不靠 unregister)、多次运行取交集进一步降噪;
 - 接更多门控(fixed-file、param-align 跨调用对齐的值粒度验证)。
+
+## 追加尝试 (2026-07-12): OOB 负控 + io_import_fixed 深化 — 两处受阻,如实记
+
+### Task A — OOB buf_index 负控:未生效
+目标:正/负都 register 1 缓冲区,只在 buf_index(0 vs 0x2a)上差,比 register+unregister 更纯。
+结果:差分 `io_prep_rw` **8 = 8**(无差异)——把 buf_index 放在 SQE 第 9 位 `{0x2a}` **没真正写进 buf_index**(`buf_index_personality_misc` 的定位编码不对,两 prog 都停在 buf_index=0、都过检查)。
+→ 需正确的 syzkaller SQE 字段语法(`io_uring_bid` 在 misc 结构里的写法)。**功能上 register+unregister 负控已隔离同一门控**(都令 `buf_index >= nr_user_bufs` 成立,已给 8 vs 3),OOB 只是更纯的变体。
+
+### Task B — 推进到 io_import_fixed:未到达
+`io_issue_sqe` cov=6(op 确被 issue),但 `io_read`/`io_rw_init_file`/`io_import_fixed` 均 cov=0——读操作在到达固定缓冲区导入前就早返回(疑 fd 解析失败 或 NOWAIT→-EAGAIN 未走同步导入)。试过 /dev/zero + 资源 fd r3,仍未到 io_import_fixed。
+→ 需让 READ_FIXED 真同步执行读导入:核对 SQE fd 是否解析成合法可读文件、是否 NOWAIT 内联完成(或 IOPOLL/特定 fd),属 syzkaller io_uring prog 专门经验。
+
+### 不变的结论
+门控执行验证的**主结果仍成立且已提交**(io_prep_rw 正 8 > 负 3,register+unregister 负控)。上述两处深化受阻,已如实记录、交用户 syzkaller 经验推进;**未硬造任何结果**。
