@@ -1,0 +1,28 @@
+#!/bin/sh
+# execprog-on-boot init: run syz-execprog with coverage on the baked-in prog,
+# print coverage to the serial console, then power off. No networking.
+BB=/bin/busybox
+export PATH=/bin:/sbin:/usr/bin:/usr/sbin
+$BB mkdir -p /proc /sys /dev /sys/kernel/debug 2>/dev/null
+$BB mount -t proc proc /proc 2>/dev/null
+$BB mount -t sysfs sys /sys 2>/dev/null
+$BB mount -t devtmpfs dev /dev 2>/dev/null
+$BB mount -t debugfs debug /sys/kernel/debug 2>/dev/null
+$BB mkdir -p /dev/shm /tmp 2>/dev/null
+$BB mount -t tmpfs tmpfs /dev/shm 2>/dev/null
+$BB mount -t tmpfs tmpfs /tmp 2>/dev/null
+# syz-execprog runs a local manager on 127.0.0.1 that the executor dials back to;
+# loopback must be up or the executor gets "Network is unreachable".
+$BB ifconfig lo 127.0.0.1 up 2>/dev/null || $BB ip link set lo up 2>/dev/null
+echo "=== EXECVERIFY_START ===" > /dev/console
+$BB timeout 25 /syz-execprog -executor=/syz-executor -sandbox=none -cover -coverfile=/tmp/cover -repeat=1 -procs=1 -threaded=0 -debug /repro.syz > /dev/console 2>&1
+echo "=== EXECVERIFY_EXECPROG_RC=$? ===" > /dev/console
+echo "=== EXECVERIFY_COVERFILES ===" > /dev/console
+$BB find / -maxdepth 3 -name 'cover*' 2>/dev/null > /dev/console
+echo "=== EXECVERIFY_COVERFILE_BEGIN ===" > /dev/console
+for f in /tmp/cover*; do echo "--file $f--" > /dev/console; $BB cat "$f" 2>/dev/null | head -30 > /dev/console; done
+echo "=== EXECVERIFY_COVERFILE_END ===" > /dev/console
+echo "=== EXECVERIFY_DONE ===" > /dev/console
+$BB sleep 1
+$BB poweroff -f 2>/dev/null
+while true; do $BB sleep 3600; done
