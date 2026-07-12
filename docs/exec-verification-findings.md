@@ -65,3 +65,25 @@
 
 ## 总结(本轮 execverify)
 harness + io_prep_rw 门控执行验证**已成立并提交**;io_import_fixed 深化、OOB-buf_index 负控、fixed-file 门控三处都卡在同一点——**syzkaller SQE 字段(buf_index / iosqe flags / fd_index)的精确 prog 编码**,属用户 syzkaller 专门经验。harness 本身对"内核状态可变门控"(如 register/unregister→nr_user_bufs)已验证有效。
+
+## fixed-file 门控:已验证 ✅ (2026-07-12, 续)
+
+用户点破 SQE 编码(第二个字段=iosqe flags)+ "先 prog2c dump 验字节、再 boot" 的方法后,一把跑通。
+- **prog2c 字节验证**(未 boot 先验):`byte0=0x16`(opcode READ)、**`byte1=0x1`(IOSQE_FIXED_FILE)**、`fd_index=0`。C 注释确认 `flags: iosqe_flags = 0x1`。
+- **差分**(正:register 1 file + FIXED_FILE fd_index=0;负:register+unregister → nr_user_files=0 → -EBADF):
+  | 函数 | 正 | 负 | |
+  |---|---|---|---|
+  | `io_sqe_files_register` | 7 | 7 | register 抵消 |
+  | `io_submit_sqes` | 29 | 29 | submit 抵消 |
+  | `io_issue_sqe` | 20 | 7 | 正 issue 更深 |
+  | **`io_read`** | **19** | **0** | **固定文件解析成功→读op执行;失败→根本不执行** |
+  | `io_file_get_fixed` | 0 | 0 | 被 inline,无独立 PC;其**效果**(把关 io_read)已由 io_read 差分验证 |
+
+→ **`gate_execution_verified = true`(signal=io_read,正 19 > 负 0)**。fixed-file 门控谓词(`fd < nr_user_files` 且文件已注册)满足时驱动读op执行、违反时不执行。比 fixed-buffer(io_prep_rw 8 vs 3)信号更干净。
+
+## 两个门控执行验证汇总
+| 门控 | signal | 正 | 负 | 判据 |
+|---|---|---|---|---|
+| READ_FIXED fixed-buffer | io_prep_rw | 8 | 3 | ✅(register/unregister 控 nr_user_bufs) |
+| READ fixed-file | io_read | 19 | 0 | ✅(register/unregister 控 nr_user_files;IOSQE_FIXED_FILE) |
+harness 复用、差分消 register/submit 噪声、prog2c 先验字节。**io_import_fixed / OOB-buf_index 仍待更精细 SQE 编码(已记)。** 未硬造结果。
