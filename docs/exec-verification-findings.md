@@ -53,3 +53,15 @@
 
 ### 不变的结论
 门控执行验证的**主结果仍成立且已提交**(io_prep_rw 正 8 > 负 3,register+unregister 负控)。上述两处深化受阻,已如实记录、交用户 syzkaller 经验推进;**未硬造任何结果**。
+
+## fixed-file 门控尝试 (2026-07-12): 受阻于 IOSQE_FIXED_FILE SQE 编码
+
+目标:验证 `io_file_get_fixed`(`fd < ctx->nr_user_files`)。用 register FILES + 带 IOSQE_FIXED_FILE 的 op(fd=@fd_index)触发门控。
+- 已定位:门控函数 `io_file_get_fixed @0xffffffff8159b190`;register 生效(`io_sqe_files_register` cov=7);FSYNC op 也执行(`io_fsync` cov=2)。
+- **但 `io_file_get_fixed` cov=0**:IOSQE_FIXED_FILE 标志没设进 SQE → op 走普通 fd 路径,不触发固定文件解析。
+- 确认执行器 `syz_io_uring_submit` **只 memcpy SQE、不自动设 FIXED_FILE**(`common_linux.h:1985`),故必须由 prog 在 SQE flags 字节里设 —— 与 buf_index 同一编码墙:我未能可靠写对 syzkaller SQE 字段(flags/fd_index)。
+
+→ **需一行正确的 syzkaller SQE 语法**(设 IOSQE_FIXED_FILE=0x1 到 flags 字节 + fd=@fd_index)。有它后,fixed-file 差分(register vs register+unregister,target `io_file_get_fixed`)即可复用现有 harness 一把跑通,与 io_prep_rw 同法。语料里见到 `@IORING_OP_READ=@pass_buffer={0x16,0x0,0x0,@fd_index=0x5,0x0,0x0}` 用了 @fd_index,但其 flags 字节编码需你确认。
+
+## 总结(本轮 execverify)
+harness + io_prep_rw 门控执行验证**已成立并提交**;io_import_fixed 深化、OOB-buf_index 负控、fixed-file 门控三处都卡在同一点——**syzkaller SQE 字段(buf_index / iosqe flags / fd_index)的精确 prog 编码**,属用户 syzkaller 专门经验。harness 本身对"内核状态可变门控"(如 register/unregister→nr_user_bufs)已验证有效。
