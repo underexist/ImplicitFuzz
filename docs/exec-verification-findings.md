@@ -109,3 +109,12 @@ purpose.md 的"参数对齐"谓词:提交索引须与**前序 register 写入的
 | fixed-file premise/activation | register vs register+unregister | io_read | 19 | 0 | ✅ |
 | **fixed-file param-align(值粒度)** | **同注册 2 files,仅 fd_index 1 vs 5** | io_read | 19 | 0 | ✅ |
 方法:复用 harness、prog2c 先验 SQE 字节、差分消 register/submit 噪声、out/kernel/vmlinux 符号化。未硬造结果。
+
+## 边界翻转对照(param-align 因果收口)✅ (2026-07-12)
+补反向控制:**固定 fd_index=1、变 nr_args**,与"固定 nr_args、变 fd_index"合成双向。
+| 实验 | 固定 | 变 | 结果 |
+|---|---|---|---|
+| A(值) | nr_args=2 | fd_index 1→5 | io_read 19→0 |
+| B(计数,翻转) | fd_index=1 | nr_args 2→1 | io_read 19→0 |
+B(prog2c 验:两者 fd_index=1,nr_args=2 vs 1;io_sqe_files_register 7=7 抵消):**同一 fd_index=1,注册数 2→1 使其从有效翻为无效**。
+→ 双向控制证明:执行结果由**跨调用关系 `fd_index < nr_args`** 决定,而非任一单独 SQE 参数值。param-align 隐式依赖的因果表述至此严谨收口。**按计划停止扩展**(不再追 io_import_fixed / OOB-buffer / 跨容器槽位——增案例不增核心论证强度)。
