@@ -1,0 +1,19 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_cancel.pre.bc",
+    "function": "io_sync_cancel",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/cancel.c:221",
+      "label": "gate only; register/writer side deliberately omitted"
+    }
+  ],
+  "ledger_functions": [
+    "io_sync_cancel"
+  ],
+  "field_clues": [
+    "fd"
+  ]
+}

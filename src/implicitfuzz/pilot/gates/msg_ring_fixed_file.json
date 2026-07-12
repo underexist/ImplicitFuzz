@@ -1,0 +1,30 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_msg_ring.pre.bc",
+    "function": "io_msg_ring",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/msg_ring.c:93",
+      "label": "gate: msg->src_fd < ctx->nr_user_files"
+    },
+    {
+      "file_line": "io_uring/rsrc.c:937",
+      "label": "writer sig: io_sqe_files_register(ctx, arg, nr_args, ...)"
+    },
+    {
+      "file_line": "io_uring/rsrc.c:963",
+      "label": "writer body: file_table/file_data set; nr_user_files nearby"
+    }
+  ],
+  "ledger_functions": [
+    "io_msg_ring",
+    "io_sqe_files_register"
+  ],
+  "field_clues": [
+    "msg->src_fd",
+    "ctx->nr_user_files",
+    "ctx->file_table"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "negative_control": true,
+  "expected": "guard_should_fire_if_hallucinated",
+  "true_predicate_best_effort": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags & REQ_F_DOUBLE_POLL",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_net.pre.bc",
+    "function": "io_send_zc_prep",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/net.c:952",
+      "label": "gate: idx >= ctx->nr_user_bufs"
+    }
+  ],
+  "ledger_functions": [
+    "io_send_zc_prep",
+    "io_sqe_buffers_register"
+  ],
+  "field_clues": [
+    "sqe->buf_index",
+    "ctx->nr_user_bufs"
+  ],
+  "adversarial_prompt": true
+}

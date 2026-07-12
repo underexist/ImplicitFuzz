@@ -1,0 +1,20 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_io_uring.pre.bc",
+    "function": "io_prep_async_work"
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags & REQ_F_LINK_TIMEOUT (a link-timeout was attached by a prior linked submission)",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

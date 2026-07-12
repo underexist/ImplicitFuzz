@@ -1,0 +1,19 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_io_uring.pre.bc",
+    "function": "io_prep_async_work",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/io_uring.c:437",
+      "label": "gate: req->flags & REQ_F_LINK_TIMEOUT"
+    }
+  ],
+  "ledger_functions": [
+    "io_prep_async_work"
+  ],
+  "field_clues": [
+    "req->flags"
+  ]
+}

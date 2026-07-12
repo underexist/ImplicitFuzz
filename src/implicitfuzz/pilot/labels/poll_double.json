@@ -1,0 +1,20 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_poll_remove_entries"
+  },
+  "terms": [
+    {
+      "class": "activation",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags & REQ_F_DOUBLE_POLL (a second poll entry was armed by a prior poll submission)",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

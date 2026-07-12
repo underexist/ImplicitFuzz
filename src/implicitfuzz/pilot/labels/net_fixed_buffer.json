@@ -1,0 +1,40 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_net.pre.bc",
+    "function": "io_send_zc_prep"
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.buf_data",
+      "relation": "ctx has registered buffers (prior io_uring_register IORING_REGISTER_BUFFERS)",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_bufs",
+      "relation": "idx < ctx->nr_user_bufs",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "param_align",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_bufs",
+      "relation": "submission buffer index must be below registered buffer count",
+      "align_target": "sqe->buf_index < nr_args of prior io_uring_register(IORING_REGISTER_BUFFERS, nr_args)",
+      "source": "inferred",
+      "confidence": "medium_high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

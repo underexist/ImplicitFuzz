@@ -1,0 +1,15 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_poll_remove_entries",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/poll.c:217",
+      "label": "gate (ambiguous, minimal context)"
+    }
+  ],
+  "ledger_functions": [],
+  "field_clues": []
+}

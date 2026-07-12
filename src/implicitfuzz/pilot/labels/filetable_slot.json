@@ -1,0 +1,30 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_filetable.pre.bc",
+    "function": "__io_fixed_fd_install"
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.file_data",
+      "relation": "ctx->file_data non-NULL (file table registered), else -ENXIO",
+      "align_target": "",
+      "source": "slice+ledger",
+      "confidence": "high",
+      "uncertain": false
+    },
+    {
+      "class": "activation",
+      "object": "io_ring_ctx",
+      "field_ref": "io_ring_ctx.nr_user_files",
+      "relation": "slot_index < ctx->nr_user_files",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

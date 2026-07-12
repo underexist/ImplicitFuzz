@@ -1,0 +1,30 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_cancel.pre.bc",
+    "function": "io_sync_cancel",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/cancel.c:221",
+      "label": "gate: fd < ctx->nr_user_files"
+    },
+    {
+      "file_line": "io_uring/rsrc.c:937",
+      "label": "writer sig: io_sqe_files_register(ctx, arg, nr_args, ...)"
+    },
+    {
+      "file_line": "io_uring/rsrc.c:963",
+      "label": "writer body: file_table/file_data set; nr_user_files nearby"
+    }
+  ],
+  "ledger_functions": [
+    "io_sync_cancel",
+    "io_sqe_files_register"
+  ],
+  "field_clues": [
+    "sqe->fd",
+    "ctx->nr_user_files",
+    "ctx->file_table"
+  ]
+}

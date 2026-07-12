@@ -1,0 +1,20 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_arm_poll_handler"
+  },
+  "terms": [
+    {
+      "class": "premise",
+      "object": "io_kiocb",
+      "field_ref": "io_kiocb.flags",
+      "relation": "req->flags & REQ_F_POLLED (request was already armed for poll by a prior submission)",
+      "align_target": "",
+      "source": "slice",
+      "confidence": "high",
+      "uncertain": false
+    }
+  ],
+  "abstain": false,
+  "alt_candidates": []
+}

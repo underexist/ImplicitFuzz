@@ -1,0 +1,19 @@
+{
+  "target_gate": {
+    "bc_unit": "io_uring_poll.pre.bc",
+    "function": "io_arm_poll_handler",
+    "branch_instruction_id": ""
+  },
+  "slice_locations": [
+    {
+      "file_line": "io_uring/poll.c:648",
+      "label": "gate: req->flags & REQ_F_POLLED"
+    }
+  ],
+  "ledger_functions": [
+    "io_arm_poll_handler"
+  ],
+  "field_clues": [
+    "req->flags"
+  ]
+}
