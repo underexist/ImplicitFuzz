@@ -87,3 +87,25 @@ harness + io_prep_rw 门控执行验证**已成立并提交**;io_import_fixed �
 | READ_FIXED fixed-buffer | io_prep_rw | 8 | 3 | ✅(register/unregister 控 nr_user_bufs) |
 | READ fixed-file | io_read | 19 | 0 | ✅(register/unregister 控 nr_user_files;IOSQE_FIXED_FILE) |
 harness 复用、差分消 register/submit 噪声、prog2c 先验字节。**io_import_fixed / OOB-buf_index 仍待更精细 SQE 编码(已记)。** 未硬造结果。
+
+## param-align 值粒度验证:已验证 ✅ (2026-07-12, 续) —— 全程最有价值的一个
+
+purpose.md 的"参数对齐"谓词:提交索引须与**前序 register 写入的计数**对齐(`sqe->fd_index < 前序 io_uring_register(FILES, nr_args) 的 nr_args`)。本次在**值粒度**上验证——与之前 fixed-file 的 register-vs-unregister(验"是否注册过")不同,这里**两 prog 注册完全相同的 2 个文件,只在提交的 fd_index 值上差**(1 vs 5),隔离的是跨调用**值对齐**本身。
+- **prog2c 先验字节**:两者 `nr_args=2`、`flags=0x1`(FIXED_FILE)一致,仅 `fd_index` word = **1(正) vs 5(负)**。
+- **差分**:
+  | 函数 | 正(idx=1) | 负(idx=5) | |
+  |---|---|---|---|
+  | `io_sqe_files_register` | 7 | 7 | **注册完全相同(2 files),抵消** |
+  | `io_submit_sqes` | 29 | 29 | 抵消 |
+  | `io_issue_sqe` | 20 | 7 | 正 issue 更深 |
+  | **`io_read`** | **19** | **0** | **idx<nr_user_files→读执行;idx>=→-EBADF不执行** |
+
+→ **`gate_execution_verified = true`(io_read 正 19 > 负 0)**。**跨调用参数对齐(提交索引 vs 前序注册计数)被执行验证**——这正是隐式依赖里最难、最有价值、整篇立论所系的一环。
+
+## execverify 三验汇总
+| 门控/谓词 | 隔离方式 | signal | 正 | 负 | |
+|---|---|---|---|---|---|
+| fixed-buffer premise/activation | register vs register+unregister | io_prep_rw | 8 | 3 | ✅ |
+| fixed-file premise/activation | register vs register+unregister | io_read | 19 | 0 | ✅ |
+| **fixed-file param-align(值粒度)** | **同注册 2 files,仅 fd_index 1 vs 5** | io_read | 19 | 0 | ✅ |
+方法:复用 harness、prog2c 先验 SQE 字节、差分消 register/submit 噪声、out/kernel/vmlinux 符号化。未硬造结果。
