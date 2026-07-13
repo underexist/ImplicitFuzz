@@ -1,0 +1,9 @@
+{
+  "candidate_id": "ff_real",
+  "candidate_origin": "replayed",
+  "gate_family": "fixed_file",
+  "static_confidence": "high",
+  "param_align": {"relation": "<", "field": "sqe->fd", "bound": "ctx->nr_user_files"},
+  "signal_function": "io_read",
+  "note": "READ FIXED_FILE value-granularity: fd_index < nr_user_files reaches io_read; OOB index rejected before io_read (io_file_get_fixed inlined). Replay of the verified param-align differential (pa_pos/pa_neg)."
+}

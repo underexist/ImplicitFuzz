@@ -1,0 +1,9 @@
+{
+  "candidate_id": "flags_unsupported",
+  "candidate_origin": "replayed",
+  "gate_family": "io_kiocb_flags_premise",
+  "static_confidence": "medium",
+  "param_align": {"relation": "<"},
+  "signal_function": "io_read",
+  "note": "Non-templated gate family (io_kiocb->flags premise). No assembler template -> unsupported -> not executed -> holds static tier (medium)."
+}

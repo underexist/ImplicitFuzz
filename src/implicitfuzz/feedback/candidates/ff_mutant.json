@@ -1,0 +1,9 @@
+{
+  "candidate_id": "ff_mutant",
+  "candidate_origin": "synthetic_negative_control",
+  "gate_family": "fixed_file",
+  "static_confidence": "high",
+  "param_align": {"relation": ">=", "field": "sqe->fd", "bound": "ctx->nr_user_files"},
+  "signal_function": "io_read",
+  "note": "Synthetic negative control: deliberately WRONG direction (claims fd >= nr_user_files reaches io_read). Its claimed-satisfy case uses OOB index 5 (no io_read) and claimed-violate uses valid index 1 (io_read) -> opposite-direction evidence -> contradicted. NOT counted in real-candidate accuracy/calibration stats."
+}

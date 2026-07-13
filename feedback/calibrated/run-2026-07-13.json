@@ -1,0 +1,44 @@
+[
+  {
+    "candidate_id": "ff_real",
+    "candidate_origin": "replayed",
+    "static_confidence": "high",
+    "execution_status": "verified",
+    "final_confidence": "execution_verified",
+    "template_family": "fixed_file",
+    "template_version": "1.0",
+    "kernel_build_identity": "bzImage@b364f28d1fcf",
+    "signal_function": "io_read",
+    "pos_coverage": 19,
+    "neg_coverage": 0,
+    "reason": "execution verified: claimed-satisfy covers deeper than claimed-violate"
+  },
+  {
+    "candidate_id": "flags_unsupported",
+    "candidate_origin": "replayed",
+    "static_confidence": "medium",
+    "execution_status": "unsupported",
+    "final_confidence": "medium",
+    "template_family": null,
+    "template_version": null,
+    "kernel_build_identity": "bzImage@b364f28d1fcf",
+    "signal_function": "io_read",
+    "pos_coverage": null,
+    "neg_coverage": null,
+    "reason": "unsupported: no assembler template for gate_family"
+  },
+  {
+    "candidate_id": "ff_mutant",
+    "candidate_origin": "synthetic_negative_control",
+    "static_confidence": "high",
+    "execution_status": "contradicted",
+    "final_confidence": "rejected",
+    "template_family": "fixed_file",
+    "template_version": "1.0",
+    "kernel_build_identity": "bzImage@b364f28d1fcf",
+    "signal_function": "io_read",
+    "pos_coverage": 0,
+    "neg_coverage": 19,
+    "reason": "contradicted: opposite-direction execution evidence"
+  }
+]
