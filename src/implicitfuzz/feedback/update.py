@@ -28,4 +28,6 @@ def update_confidence(static_tier: str, outcome: str) -> tuple[str, str]:
 
 
 def rerank(view: list[dict]) -> list[dict]:
-    return sorted(view, key=lambda r: TIER_ORDER.index(r["final_confidence"]), reverse=True)
+    # primary: final tier descending; secondary: candidate_id ascending (deterministic)
+    return sorted(view, key=lambda r: (-TIER_ORDER.index(r["final_confidence"]),
+                                       r.get("candidate_id", "")))

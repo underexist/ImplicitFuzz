@@ -23,3 +23,11 @@ def test_rerank_orders_by_final_tier():
             {"final_confidence": "rejected"}, {"final_confidence": "high"}]
     order = [r["final_confidence"] for r in rerank(view)]
     assert order == ["execution_verified", "high", "low", "rejected"]
+
+
+def test_rerank_tiebreak_by_candidate_id():
+    view = [{"final_confidence": "high", "candidate_id": "zeta"},
+            {"final_confidence": "high", "candidate_id": "alpha"},
+            {"final_confidence": "execution_verified", "candidate_id": "mid"}]
+    out = rerank(view)
+    assert [r["candidate_id"] for r in out] == ["mid", "alpha", "zeta"]
