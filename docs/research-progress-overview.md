@@ -50,5 +50,16 @@ LLM 候选依赖 → 静态证据评分 → 生成正负执行用例 → KCOV �
 ```
 这把 execution verification 从"论文末端证明"升级为**系统内部反馈机制**,把单向流水线升级成"**推断—验证—校准**"闭环——更接近论文核心贡献。multi-model eval 押后(增模型层稳健性/广度,不直接增方法本身)。
 
+## 6. 置信度反馈闭环:已建成 + 小规模评估(2026-07-13)
+**§5 的闭环已实现并冻结为 MVP**(`24c33ce`)。四态 outcome(verified/contradicted/undecidable/unsupported)、离散档单调升降、模板化正负 prog(fixed_file 值粒度 / fixed_buffer 状态)、executor 注入、calibrated view 不覆盖原始。三种更新动作已在真实 qemu/KCOV 上各验一例:真实候选 **verified→execution_verified**、合成负控 **contradicted→rejected**、非模板 **unsupported→维持**(详 `docs/confidence-feedback-findings.md`)。
+
+**小规模评估**(`docs/confidence-feedback-eval.md`):把"能力演示"推进为"在冻结的 10 个真实 Phase 2 候选上的效果证据"。
+- **忠实模板覆盖 2/10**;unsupported 8/10 = op_not_covered ×4(同字段关系族、目标 op 未覆盖)+ no_family_template ×4(flags 族)。
+- **两层指标(并列,防"100% 验证率"错觉):** 全部真实候选 verified 2/10;严格支持且执行 verified 2/2——后者**注明为 frozen replay,非 held-out 泛化**(两候选参与过模板开发)。
+- **rerank:** 10 候选原本齐平 static-high,执行证据把 2 个 execution-confirmed 升至顶档,成为**新的排序依据**;不主张整体排序质量改善(unsupported 无 ground truth),同档 candidate_id 确定性 tie-break。
+- **边界严格保留:** 两家族、单内核单子系统、离散更新——**尚非概率校准**。评测未回改模板;冻结快照记 source_commit/hash/adapter/schema 溯源。
+
+**定位:** 本轮量化的是 MVP 在真实候选集上的**忠实覆盖边界与反馈状态分布**,而非通用合成或统计校准效果。
+
 ---
 *证据落盘:`docs/{phase2-status,ledger-reconciliation-phase1-findings,llm-predicate-pilot-findings,llm-predicate-formal-eval-findings,exec-verification-findings,exec-verification-summary}.md`;代码 `src/implicitfuzz/{evidence,reconcile,pilot}`、`extraction/`、`execverify/`;spec/plan 于 `docs/superpowers/`。*
