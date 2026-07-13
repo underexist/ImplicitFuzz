@@ -1,5 +1,8 @@
-import json, pytest
+import json, os, pytest
 from implicitfuzz.feedback.pilot_adapter import adapt_gate, AdapterError
+
+GATES_DIR = "src/implicitfuzz/pilot/gates"
+RUNS_DIR = "pilot/runs_formal"
 
 RFF_DEF = {"field_clues": ["fd", "ctx->nr_user_files", "ctx->file_table"]}
 RFF_RUN = {"target_gate": {"function": "io_file_get_fixed"}, "terms": [
@@ -70,3 +73,20 @@ def test_no_activation_term_raises():
            "terms": [{"class": "premise", "field_ref": "a", "relation": "x", "confidence": "high"}]}
     with pytest.raises(AdapterError):
         adapt_gate("g", RFF_DEF, run)
+
+
+def test_build_snapshot_provenance_and_determinism():
+    from implicitfuzz.feedback.pilot_adapter import build_snapshot, ADAPTER_VERSION
+    ids = ["read_fixed_file", "fixed_buffer", "cancel_fixed_file", "kiocb_flags"]
+    snap = build_snapshot(ids, GATES_DIR, RUNS_DIR, source_commit="deadbee")
+    assert snap["source_commit"] == "deadbee"
+    assert snap["gate_ids"] == sorted(ids)
+    assert snap["adapter_version"] == ADAPTER_VERSION
+    assert "schema_version" in snap and len(snap["generated_hash"]) == 64
+    # deterministic: same inputs -> same hash (hash excludes commit)
+    snap2 = build_snapshot(ids, GATES_DIR, RUNS_DIR, source_commit="other")
+    assert snap["generated_hash"] == snap2["generated_hash"]
+    by = {c["candidate_id"]: c for c in snap["candidates"]}
+    assert by["read_fixed_file"]["executable"] and by["fixed_buffer"]["executable"]
+    assert by["cancel_fixed_file"]["unsupported_reason"] == "op_not_covered"
+    assert by["kiocb_flags"]["unsupported_reason"] == "no_family_template"

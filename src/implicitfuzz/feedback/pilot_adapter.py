@@ -8,6 +8,9 @@ its weakest premise); a gate with no activation term is an AdapterError, never a
 silent default."""
 
 from __future__ import annotations
+import hashlib
+import json
+import os
 import re
 
 ADAPTER_VERSION = "1.0"
@@ -109,3 +112,24 @@ def adapt_gate(gate_id: str, gate_def: dict, run: dict) -> dict:
         base.update(gate_family=None, operation=None, signal_function=None,
                     executable=False, unsupported_reason="op_not_covered")
     return base
+
+
+def _hash_candidates(candidates):
+    norm = json.dumps(candidates, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(norm.encode()).hexdigest()
+
+
+def build_snapshot(gate_ids, gates_dir, runs_dir, source_commit):
+    candidates = []
+    for gid in sorted(gate_ids):
+        gate_def = json.load(open(os.path.join(gates_dir, gid + ".json")))
+        run = json.load(open(os.path.join(runs_dir, gid + ".json")))
+        candidates.append(adapt_gate(gid, gate_def, run))
+    return {
+        "source_commit": source_commit,
+        "gate_ids": sorted(gate_ids),
+        "adapter_version": ADAPTER_VERSION,
+        "schema_version": PREDICATE_SCHEMA_VERSION,
+        "candidates": candidates,
+        "generated_hash": _hash_candidates(candidates),
+    }
