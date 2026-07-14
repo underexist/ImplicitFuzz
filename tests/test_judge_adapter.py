@@ -34,10 +34,11 @@ def test_parse_predicate_garbage():
 def test_run_judge_uses_injected_poster_no_network():
     seen = {}
     def stub(url, headers, body):
-        seen["url"] = url; seen["model"] = body["model"]
+        seen["url"] = url; seen["model"] = body["model"]; seen["max_tokens"] = body["max_tokens"]
         return {"model": "deepseek-v4-flash",
                 "choices": [{"message": {"content": '{"terms": [{"class": "activation"}]}'}}],
                 "usage": {"total_tokens": 42}}
     out = run_judge("deepseek-v4-flash", BUNDLE, base_url="https://x", api_key="k", poster=stub)
     assert seen["url"].endswith("/chat/completions") and seen["model"] == "deepseek-v4-flash"
+    assert seen["max_tokens"] >= 8192  # room for reasoning tokens + JSON answer
     assert out["_parse_ok"] and out["_model"] == "deepseek-v4-flash" and out["_usage"]["total_tokens"] == 42

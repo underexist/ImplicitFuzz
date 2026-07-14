@@ -64,10 +64,14 @@ def _urllib_poster(url, headers, body):
         return json.loads(resp.read().decode())
 
 
-def run_judge(model: str, bundle: dict, *, base_url=None, api_key=None, poster=_urllib_poster) -> dict:
+def run_judge(model: str, bundle: dict, *, base_url=None, api_key=None,
+              max_tokens=16384, poster=_urllib_poster) -> dict:
+    # DeepSeek v4 models emit reasoning tokens that count against the completion
+    # budget; 4096 was fully consumed by reasoning and truncated the JSON answer,
+    # so the budget must be large enough for reasoning + the predicate object.
     base_url = base_url or os.environ["DEEPSEEK_BASE_URL"]
     api_key = api_key or os.environ["DEEPSEEK_API_KEY"]
-    body = {"model": model, "temperature": 0, "max_tokens": 4096,
+    body = {"model": model, "temperature": 0, "max_tokens": max_tokens,
             "response_format": {"type": "json_object"},
             "messages": [{"role": "user", "content": bundle_to_prompt(bundle)}], "stream": False}
     resp = poster(base_url.rstrip("/") + "/chat/completions",
