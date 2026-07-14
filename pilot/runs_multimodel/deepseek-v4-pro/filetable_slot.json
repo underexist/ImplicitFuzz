@@ -1,0 +1,45 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_filetable.pre.bc",
+  "function": "__io_fixed_fd_install",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "io_ring_ctx",
+   "field_ref": "io_ring_ctx.file_data",
+   "relation": "!= NULL",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "slot_index",
+   "field_ref": "slot_index",
+   "relation": ">=",
+   "align_target": "io_ring_ctx.nr_user_files",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 5779,
+  "completion_tokens": 3811,
+  "total_tokens": 9590,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 3601
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 5779
+ }
+}

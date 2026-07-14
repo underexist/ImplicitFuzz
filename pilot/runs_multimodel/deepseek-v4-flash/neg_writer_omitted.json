@@ -1,0 +1,25 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_cancel.pre.bc",
+  "function": "io_sync_cancel",
+  "branch_instruction_id": ""
+ },
+ "terms": [],
+ "abstain": true,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-flash",
+ "_usage": {
+  "prompt_tokens": 2945,
+  "completion_tokens": 2451,
+  "total_tokens": 5396,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 2385
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 2945
+ }
+}

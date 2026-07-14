@@ -1,0 +1,376 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_poll.pre.bc",
+  "function": "io_arm_poll_handler",
+  "branch_instruction_id": ""
+ },
+ "field_clues": [
+  "req->flags"
+ ],
+ "code_slices": [
+  {
+   "label": "gate: req->flags & REQ_F_POLLED",
+   "file_line": "io_uring/poll.c:648",
+   "text": "633: \t\t\t       struct poll_table_struct *p)\n634: {\n635: \tstruct io_poll_table *pt = container_of(p, struct io_poll_table, pt);\n636: \tstruct async_poll *apoll = pt->req->apoll;\n637: \n638: \t__io_queue_proc(&apoll->poll, pt, head, &apoll->double_poll);\n639: }\n640: \n641: static struct async_poll *io_req_alloc_apoll(struct io_kiocb *req,\n642: \t\t\t\t\t     unsigned issue_flags)\n643: {\n644: \tstruct io_ring_ctx *ctx = req->ctx;\n645: \tstruct io_cache_entry *entry;\n646: \tstruct async_poll *apoll;\n647: \n648: \tif (req->flags & REQ_F_POLLED) {\n649: \t\tapoll = req->apoll;\n650: \t\tkfree(apoll->double_poll);\n651: \t} else if (!(issue_flags & IO_URING_F_UNLOCKED) &&\n652: \t\t   (entry = io_alloc_cache_get(&ctx->apoll_cache)) != NULL) {\n653: \t\tapoll = container_of(entry, struct async_poll, cache);\n654: \t} else {\n655: \t\tapoll = kmalloc(sizeof(*apoll), GFP_ATOMIC);\n656: \t\tif (unlikely(!apoll))\n657: \t\t\treturn NULL;\n658: \t}\n659: \tapoll->double_poll = NULL;\n660: \treq->apoll = apoll;\n661: \treturn apoll;\n662: }\n663: "
+  }
+ ],
+ "ledger": [
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.opcode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": "[0]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_op",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_pos_lock",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[72]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.ctx",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[88]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[336]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "hlist_node.pprev",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "hlist_node.pprev",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "hlist_node.pprev",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "alloc",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "async_poll.double_poll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.apoll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[168]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.apoll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[168]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "async_poll.double_poll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "free",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "async_poll.double_poll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.apoll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[168]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[112]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[22]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[22]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[112]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.buf_index",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[66]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_arm_poll_handler",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  }
+ ],
+ "instructions": "You are a constrained judge. Using ONLY the code slice and the access-fact ledger below, infer the state-gate predicate for reaching the target branch. Output JSON conforming to predicate_schema. Classify each term as premise / activation / param_align; tag its object; put the referenced field in field_ref as '<struct>.<member>'. Do NOT reference fields absent from the slice/ledger. You may abstain or give alt_candidates if unsure.",
+ "predicate_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+   "target_gate": {
+    "type": "object",
+    "properties": {
+     "bc_unit": {
+      "type": "string"
+     },
+     "function": {
+      "type": "string"
+     },
+     "branch_instruction_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "function"
+    ]
+   },
+   "terms": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "class": {
+       "enum": [
+        "premise",
+        "activation",
+        "param_align"
+       ]
+      },
+      "object": {
+       "type": "string"
+      },
+      "field_ref": {
+       "type": "string"
+      },
+      "relation": {
+       "type": "string"
+      },
+      "align_target": {
+       "type": "string"
+      },
+      "source": {
+       "enum": [
+        "slice",
+        "slice+ledger",
+        "inferred"
+       ]
+      },
+      "confidence": {
+       "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low"
+       ]
+      },
+      "uncertain": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "class",
+      "object",
+      "field_ref",
+      "relation",
+      "source",
+      "confidence",
+      "uncertain"
+     ]
+    }
+   },
+   "abstain": {
+    "type": "boolean"
+   },
+   "alt_candidates": {
+    "type": "array"
+   }
+  },
+  "required": [
+   "target_gate",
+   "terms",
+   "abstain"
+  ]
+ }
+}

@@ -1,0 +1,278 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_poll.pre.bc",
+  "function": "io_poll_remove_entries",
+  "branch_instruction_id": ""
+ },
+ "field_clues": [
+  "req->flags"
+ ],
+ "code_slices": [
+  {
+   "label": "gate: req->flags & REQ_F_DOUBLE_POLL",
+   "file_line": "io_uring/poll.c:217",
+   "text": "202: \t * lock in the first place can race with the waitqueue being freed.\n203: \t *\n204: \t * We solve this as eventpoll does: by taking advantage of the fact that\n205: \t * all users of wake_up_pollfree() will RCU-delay the actual free.  If\n206: \t * we enter rcu_read_lock() and see that the pointer to the queue is\n207: \t * non-NULL, we can then lock it without the memory being freed out from\n208: \t * under us.\n209: \t *\n210: \t * Keep holding rcu_read_lock() as long as we hold the queue lock, in\n211: \t * case the caller deletes the entry from the queue, leaving it empty.\n212: \t * In that case, only RCU prevents the queue memory from being freed.\n213: \t */\n214: \trcu_read_lock();\n215: \tif (req->flags & REQ_F_SINGLE_POLL)\n216: \t\tio_poll_remove_entry(io_poll_get_single(req));\n217: \tif (req->flags & REQ_F_DOUBLE_POLL)\n218: \t\tio_poll_remove_entry(io_poll_get_double(req));\n219: \trcu_read_unlock();\n220: }\n221: \n222: enum {\n223: \tIOU_POLL_DONE = 0,\n224: \tIOU_POLL_NO_ACTION = 1,\n225: \tIOU_POLL_REMOVE_POLL_USE_RES = 2,\n226: };\n227: \n228: /*\n229:  * All poll tw should go through this. Checks for poll events, manages\n230:  * references, does rewait, etc.\n231:  *\n232:  * Returns a negative error on failure. IOU_POLL_NO_ACTION when no action require,"
+  }
+ ],
+ "ledger": [
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.opcode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.apoll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[168]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_poll.head",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[56]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[48]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": "list_head.prev",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[48]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[56]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_poll.head",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.opcode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.apoll",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[168]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_poll.head",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[56]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[48]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": "list_head.prev",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[48]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[56]"
+  },
+  {
+   "function": "io_poll_remove_entries",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_poll.head",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  }
+ ],
+ "instructions": "You are a constrained judge. Using ONLY the code slice and the access-fact ledger below, infer the state-gate predicate for reaching the target branch. Output JSON conforming to predicate_schema. Classify each term as premise / activation / param_align; tag its object; put the referenced field in field_ref as '<struct>.<member>'. Do NOT reference fields absent from the slice/ledger. You may abstain or give alt_candidates if unsure.",
+ "predicate_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+   "target_gate": {
+    "type": "object",
+    "properties": {
+     "bc_unit": {
+      "type": "string"
+     },
+     "function": {
+      "type": "string"
+     },
+     "branch_instruction_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "function"
+    ]
+   },
+   "terms": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "class": {
+       "enum": [
+        "premise",
+        "activation",
+        "param_align"
+       ]
+      },
+      "object": {
+       "type": "string"
+      },
+      "field_ref": {
+       "type": "string"
+      },
+      "relation": {
+       "type": "string"
+      },
+      "align_target": {
+       "type": "string"
+      },
+      "source": {
+       "enum": [
+        "slice",
+        "slice+ledger",
+        "inferred"
+       ]
+      },
+      "confidence": {
+       "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low"
+       ]
+      },
+      "uncertain": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "class",
+      "object",
+      "field_ref",
+      "relation",
+      "source",
+      "confidence",
+      "uncertain"
+     ]
+    }
+   },
+   "abstain": {
+    "type": "boolean"
+   },
+   "alt_candidates": {
+    "type": "array"
+   }
+  },
+  "required": [
+   "target_gate",
+   "terms",
+   "abstain"
+  ]
+ }
+}

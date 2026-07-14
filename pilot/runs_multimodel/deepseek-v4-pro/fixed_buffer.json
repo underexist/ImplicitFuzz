@@ -1,0 +1,74 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_rw.pre.bc",
+  "function": "io_prep_rw",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "io_kiocb",
+   "field_ref": "io_kiocb.buf_index",
+   "relation": "has_field",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "premise",
+   "object": "io_ring_ctx",
+   "field_ref": "io_ring_ctx.nr_user_bufs",
+   "relation": "has_field",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "gate",
+   "field_ref": "io_kiocb.buf_index",
+   "relation": ">=",
+   "align_target": "io_ring_ctx.nr_user_bufs",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "param_align",
+   "object": "io_kiocb",
+   "field_ref": "io_kiocb.buf_index",
+   "relation": "set_from",
+   "align_target": "io_uring_sqe.buf_index",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "param_align",
+   "object": "io_ring_ctx",
+   "field_ref": "io_ring_ctx.nr_user_bufs",
+   "relation": "incremented",
+   "align_target": "io_sqe_buffers_register",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 6465,
+  "completion_tokens": 4219,
+  "total_tokens": 10684,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 3747
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 6465
+ }
+}

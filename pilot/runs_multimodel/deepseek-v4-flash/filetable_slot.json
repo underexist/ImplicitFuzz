@@ -1,0 +1,43 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_filetable.pre.bc",
+  "function": "__io_fixed_fd_install",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "ctx->file_data",
+   "field_ref": "io_ring_ctx.file_data",
+   "relation": "!= NULL",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "slot_index",
+   "field_ref": "io_ring_ctx.nr_user_files",
+   "relation": ">=",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "_parse_ok": true,
+ "_model": "deepseek-v4-flash",
+ "_usage": {
+  "prompt_tokens": 5779,
+  "completion_tokens": 1934,
+  "total_tokens": 7713,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1738
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 5779
+ }
+}

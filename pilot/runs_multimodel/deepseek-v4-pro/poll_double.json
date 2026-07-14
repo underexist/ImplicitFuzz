@@ -1,0 +1,44 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_poll.pre.bc",
+  "function": "io_poll_remove_entries",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "req",
+   "field_ref": "io_kiocb.flags",
+   "relation": "read",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "req",
+   "field_ref": "io_kiocb.flags",
+   "relation": "mask_test & REQ_F_DOUBLE_POLL",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 2375,
+  "completion_tokens": 1691,
+  "total_tokens": 4066,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 1485
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 2375
+ }
+}

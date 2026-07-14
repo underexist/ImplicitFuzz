@@ -1,0 +1,35 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_io_uring.pre.bc",
+  "function": "__io_req_complete_post",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "activation",
+   "object": "io_kiocb",
+   "field_ref": "flags",
+   "relation": "bitwise_and_nonzero(IO_REQ_LINK_FLAGS)",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-flash",
+ "_usage": {
+  "prompt_tokens": 3361,
+  "completion_tokens": 960,
+  "total_tokens": 4321,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 819
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 3361
+ }
+}

@@ -1,0 +1,376 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_cancel.pre.bc",
+  "function": "io_sync_cancel",
+  "branch_instruction_id": ""
+ },
+ "field_clues": [
+  "fd"
+ ],
+ "code_slices": [
+  {
+   "label": "gate only; register/writer side deliberately omitted",
+   "file_line": "io_uring/cancel.c:221",
+   "text": "206: \t\tspin_lock_init(&table->hbs[i].lock);\n207: \t\tINIT_HLIST_HEAD(&table->hbs[i].list);\n208: \t}\n209: }\n210: \n211: static int __io_sync_cancel(struct io_uring_task *tctx,\n212: \t\t\t    struct io_cancel_data *cd, int fd)\n213: {\n214: \tstruct io_ring_ctx *ctx = cd->ctx;\n215: \n216: \t/* fixed must be grabbed every time since we drop the uring_lock */\n217: \tif ((cd->flags & IORING_ASYNC_CANCEL_FD) &&\n218: \t    (cd->flags & IORING_ASYNC_CANCEL_FD_FIXED)) {\n219: \t\tunsigned long file_ptr;\n220: \n221: \t\tif (unlikely(fd >= ctx->nr_user_files))\n222: \t\t\treturn -EBADF;\n223: \t\tfd = array_index_nospec(fd, ctx->nr_user_files);\n224: \t\tfile_ptr = io_fixed_file_slot(&ctx->file_table, fd)->file_ptr;\n225: \t\tcd->file = (struct file *) (file_ptr & FFS_MASK);\n226: \t\tif (!cd->file)\n227: \t\t\treturn -EBADF;\n228: \t}\n229: \n230: \treturn __io_async_cancel(cd, tctx, 0);\n231: }\n232: \n233: int io_sync_cancel(struct io_ring_ctx *ctx, void __user *arg)\n234: \t__must_hold(&ctx->uring_lock)\n235: {\n236: \tstruct io_cancel_data cd = {"
+  }
+ ],
+ "ledger": [
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[20]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[24]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[12]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[48]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[56]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[1872]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[1872]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[136]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[24]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[20]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_cancel_data.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[136]"
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sync_cancel",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  }
+ ],
+ "instructions": "You are a constrained judge. Using ONLY the code slice and the access-fact ledger below, infer the state-gate predicate for reaching the target branch. Output JSON conforming to predicate_schema. Classify each term as premise / activation / param_align; tag its object; put the referenced field in field_ref as '<struct>.<member>'. Do NOT reference fields absent from the slice/ledger. You may abstain or give alt_candidates if unsure.",
+ "predicate_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+   "target_gate": {
+    "type": "object",
+    "properties": {
+     "bc_unit": {
+      "type": "string"
+     },
+     "function": {
+      "type": "string"
+     },
+     "branch_instruction_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "function"
+    ]
+   },
+   "terms": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "class": {
+       "enum": [
+        "premise",
+        "activation",
+        "param_align"
+       ]
+      },
+      "object": {
+       "type": "string"
+      },
+      "field_ref": {
+       "type": "string"
+      },
+      "relation": {
+       "type": "string"
+      },
+      "align_target": {
+       "type": "string"
+      },
+      "source": {
+       "enum": [
+        "slice",
+        "slice+ledger",
+        "inferred"
+       ]
+      },
+      "confidence": {
+       "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low"
+       ]
+      },
+      "uncertain": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "class",
+      "object",
+      "field_ref",
+      "relation",
+      "source",
+      "confidence",
+      "uncertain"
+     ]
+    }
+   },
+   "abstain": {
+    "type": "boolean"
+   },
+   "alt_candidates": {
+    "type": "array"
+   }
+  },
+  "required": [
+   "target_gate",
+   "terms",
+   "abstain"
+  ]
+ }
+}

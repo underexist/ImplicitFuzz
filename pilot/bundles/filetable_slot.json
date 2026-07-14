@@ -1,0 +1,707 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_filetable.pre.bc",
+  "function": "__io_fixed_fd_install",
+  "branch_instruction_id": ""
+ },
+ "field_clues": [
+  "slot_index",
+  "ctx->nr_user_files",
+  "ctx->file_data"
+ ],
+ "code_slices": [
+  {
+   "label": "gate: slot_index >= ctx->nr_user_files (preceded by !ctx->file_data -> -ENXIO)",
+   "file_line": "io_uring/filetable.c:72",
+   "text": "57: \ttable->bitmap = NULL;\n58: }\n59: \n60: static int io_install_fixed_file(struct io_ring_ctx *ctx, struct file *file,\n61: \t\t\t\t u32 slot_index)\n62: \t__must_hold(&req->ctx->uring_lock)\n63: {\n64: \tbool needs_switch = false;\n65: \tstruct io_fixed_file *file_slot;\n66: \tint ret;\n67: \n68: \tif (io_is_uring_fops(file))\n69: \t\treturn -EBADF;\n70: \tif (!ctx->file_data)\n71: \t\treturn -ENXIO;\n72: \tif (slot_index >= ctx->nr_user_files)\n73: \t\treturn -EINVAL;\n74: \n75: \tslot_index = array_index_nospec(slot_index, ctx->nr_user_files);\n76: \tfile_slot = io_fixed_file_slot(&ctx->file_table, slot_index);\n77: \n78: \tif (file_slot->file_ptr) {\n79: \t\tstruct file *old_file;\n80: \n81: \t\tret = io_rsrc_node_switch_start(ctx);\n82: \t\tif (ret)\n83: \t\t\tgoto err;\n84: \n85: \t\told_file = (struct file *)(file_slot->file_ptr & FFS_MASK);\n86: \t\tret = io_queue_rsrc_removal(ctx->file_data, slot_index,\n87: \t\t\t\t\t    ctx->rsrc_node, old_file);"
+  }
+ ],
+ "ledger": [
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_alloc_end",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[476]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[144]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[472]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[136]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[120]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_rsrc_data.tags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[144]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[144]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  },
+  {
+   "function": "__io_fixed_fd_install",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "task_struct.signal",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[1888]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[784]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "alloc",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "free",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[24]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_rsrc_node.done",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "free",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_rsrc_data.tags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[136]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_alloc_start",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[472]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_alloc_end",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[476]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "task_struct.signal",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[1888]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[784]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "alloc",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "free",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[16]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[24]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_rsrc_node.done",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.rsrc_backup_node",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[800]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "free",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_ring_ctx.file_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[816]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_rsrc_data.tags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[8]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[136]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_alloc_start",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[472]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_ring_ctx.file_alloc_end",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[476]"
+  },
+  {
+   "function": "io_sqe_files_register",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[152]"
+  }
+ ],
+ "instructions": "You are a constrained judge. Using ONLY the code slice and the access-fact ledger below, infer the state-gate predicate for reaching the target branch. Output JSON conforming to predicate_schema. Classify each term as premise / activation / param_align; tag its object; put the referenced field in field_ref as '<struct>.<member>'. Do NOT reference fields absent from the slice/ledger. You may abstain or give alt_candidates if unsure.",
+ "predicate_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+   "target_gate": {
+    "type": "object",
+    "properties": {
+     "bc_unit": {
+      "type": "string"
+     },
+     "function": {
+      "type": "string"
+     },
+     "branch_instruction_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "function"
+    ]
+   },
+   "terms": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "class": {
+       "enum": [
+        "premise",
+        "activation",
+        "param_align"
+       ]
+      },
+      "object": {
+       "type": "string"
+      },
+      "field_ref": {
+       "type": "string"
+      },
+      "relation": {
+       "type": "string"
+      },
+      "align_target": {
+       "type": "string"
+      },
+      "source": {
+       "enum": [
+        "slice",
+        "slice+ledger",
+        "inferred"
+       ]
+      },
+      "confidence": {
+       "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low"
+       ]
+      },
+      "uncertain": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "class",
+      "object",
+      "field_ref",
+      "relation",
+      "source",
+      "confidence",
+      "uncertain"
+     ]
+    }
+   },
+   "abstain": {
+    "type": "boolean"
+   },
+   "alt_candidates": {
+    "type": "array"
+   }
+  },
+  "required": [
+   "target_gate",
+   "terms",
+   "abstain"
+  ]
+ }
+}

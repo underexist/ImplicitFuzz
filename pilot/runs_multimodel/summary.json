@@ -1,0 +1,1132 @@
+{
+  "per_model": {
+    "deepseek-v4-flash": {
+      "n_gates": 10,
+      "exact_precision": 0.2,
+      "exact_recall": 0.2,
+      "relaxed_field_precision": 0.3,
+      "relaxed_field_recall": 0.3,
+      "abstain_rate": 0.1,
+      "parse_ok_rate": 1.0,
+      "schema_ok_rate": 1.0
+    },
+    "deepseek-v4-pro": {
+      "n_gates": 10,
+      "exact_precision": 0.2,
+      "exact_recall": 0.25,
+      "relaxed_field_precision": 0.5333333333333333,
+      "relaxed_field_recall": 0.6,
+      "abstain_rate": 0.0,
+      "parse_ok_rate": 1.0,
+      "schema_ok_rate": 1.0
+    },
+    "claude-opus-baseline": {
+      "n_gates": 10,
+      "exact_precision": 0.35833333333333334,
+      "exact_recall": 0.7,
+      "relaxed_field_precision": 0.6833333333333333,
+      "relaxed_field_recall": 0.9,
+      "abstain_rate": 0.0,
+      "parse_ok_rate": 1.0,
+      "schema_ok_rate": 1.0
+    }
+  },
+  "guard_consistency": {
+    "deepseek-v4-flash": {
+      "neg_writer_omitted": false,
+      "neg_thin_slice": true,
+      "neg_adversarial": false
+    },
+    "deepseek-v4-pro": {
+      "neg_writer_omitted": true,
+      "neg_thin_slice": true,
+      "neg_adversarial": false
+    },
+    "claude-opus-baseline": {
+      "neg_writer_omitted": true,
+      "neg_thin_slice": false,
+      "neg_adversarial": true
+    }
+  },
+  "inter_model_agreement": {
+    "net_fixed_buffer": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "fixed_buffer": {
+      "exact_jaccard": 0.1111111111111111,
+      "field_jaccard": 0.5
+    },
+    "read_fixed_file": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "neg_adversarial": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.14285714285714285
+    },
+    "msg_ring_fixed_file": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.6666666666666666
+    },
+    "neg_writer_omitted": {
+      "exact_jaccard": 0.4,
+      "field_jaccard": 0.5
+    },
+    "kiocb_flags": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "poll_polled": {
+      "exact_jaccard": 0.5,
+      "field_jaccard": 1.0
+    },
+    "poll_double": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "neg_thin_slice": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "filetable_slot": {
+      "exact_jaccard": 0.2,
+      "field_jaccard": 0.3333333333333333
+    },
+    "link_timeout": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    },
+    "cancel_fixed_file": {
+      "exact_jaccard": 0.0,
+      "field_jaccard": 0.0
+    }
+  },
+  "models": [
+    "deepseek-v4-flash",
+    "deepseek-v4-pro",
+    "claude-opus-baseline"
+  ],
+  "_detail": {
+    "deepseek-v4-flash": {
+      "cancel_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": false
+      },
+      "filetable_slot": {
+        "exact": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "matched": 2,
+          "n_judge": 2,
+          "n_truth": 2
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 2
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 2
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "fixed_buffer": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "kiocb_flags": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "link_timeout": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "msg_ring_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "neg_adversarial": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": true
+      },
+      "neg_thin_slice": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "neg_writer_omitted": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 0,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": true,
+        "parse_ok": true,
+        "n_terms": 0,
+        "field_existence": true
+      },
+      "net_fixed_buffer": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 0,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": true,
+        "parse_ok": true,
+        "n_terms": 0,
+        "field_existence": true
+      },
+      "poll_double": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "poll_polled": {
+        "exact": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": true
+      },
+      "read_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": false
+      }
+    },
+    "deepseek-v4-pro": {
+      "cancel_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 3,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 4,
+        "field_existence": true
+      },
+      "filetable_slot": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 0.5,
+          "matched": 1,
+          "n_judge": 2,
+          "n_truth": 2
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": false
+      },
+      "fixed_buffer": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 5,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.2,
+            "recall": 0.3333333333333333,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 5,
+        "field_existence": true
+      },
+      "kiocb_flags": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "link_timeout": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": true
+      },
+      "msg_ring_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 3,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.3333333333333333,
+            "recall": 0.3333333333333333,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 3,
+        "field_existence": true
+      },
+      "neg_adversarial": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 2,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "neg_thin_slice": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "neg_writer_omitted": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 3,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 4,
+        "field_existence": false
+      },
+      "net_fixed_buffer": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      },
+      "poll_double": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 2,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "poll_polled": {
+        "exact": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 1,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": true
+      },
+      "read_fixed_file": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": false
+      }
+    },
+    "claude-opus-baseline": {
+      "cancel_fixed_file": {
+        "exact": {
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "matched": 2,
+          "n_judge": 5,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.4,
+            "recall": 0.6666666666666666,
+            "matched": 2
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 2
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 5,
+        "field_existence": true
+      },
+      "filetable_slot": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "matched": 2,
+          "n_judge": 4,
+          "n_truth": 2
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 2
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 2
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 4,
+        "field_existence": true
+      },
+      "fixed_buffer": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 5,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.25,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 5,
+        "field_existence": true
+      },
+      "kiocb_flags": {
+        "exact": {
+          "precision": 0.3333333333333333,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 3,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.3333333333333333,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 3,
+        "field_existence": true
+      },
+      "link_timeout": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 2,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "msg_ring_fixed_file": {
+        "exact": {
+          "precision": 0.25,
+          "recall": 0.3333333333333333,
+          "matched": 1,
+          "n_judge": 4,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.25,
+            "recall": 0.3333333333333333,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "matched": 2
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 4,
+        "field_existence": true
+      },
+      "neg_adversarial": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 8,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": false,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 8,
+        "field_existence": true
+      },
+      "neg_thin_slice": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 1,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 1,
+        "field_existence": true
+      },
+      "neg_writer_omitted": {
+        "exact": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "matched": 0,
+          "n_judge": 4,
+          "n_truth": 0
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          },
+          "field_set": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "matched": 0
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 4,
+        "field_existence": false
+      },
+      "net_fixed_buffer": {
+        "exact": {
+          "precision": 0.2,
+          "recall": 0.3333333333333333,
+          "matched": 1,
+          "n_judge": 5,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.2,
+            "recall": 0.3333333333333333,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 0.25,
+            "recall": 0.5,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 5,
+        "field_existence": true
+      },
+      "poll_double": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 2,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "poll_polled": {
+        "exact": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "matched": 1,
+          "n_judge": 2,
+          "n_truth": 1
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "matched": 1
+          },
+          "field_set": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "matched": 1
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 2,
+        "field_existence": true
+      },
+      "read_fixed_file": {
+        "exact": {
+          "precision": 0.4,
+          "recall": 0.6666666666666666,
+          "matched": 2,
+          "n_judge": 5,
+          "n_truth": 3
+        },
+        "relaxed": {
+          "class_field": {
+            "precision": 0.6,
+            "recall": 1.0,
+            "matched": 3
+          },
+          "field_set": {
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "matched": 2
+          }
+        },
+        "schema": true,
+        "abstain": false,
+        "parse_ok": true,
+        "n_terms": 5,
+        "field_existence": true
+      }
+    }
+  }
+}

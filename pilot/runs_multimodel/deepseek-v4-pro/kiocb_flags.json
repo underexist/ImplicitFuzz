@@ -1,0 +1,44 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_io_uring.pre.bc",
+  "function": "__io_req_complete_post",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "io_kiocb",
+   "field_ref": "io_kiocb.refs",
+   "relation": "equals 0 after decrement (req_ref_put_and_test returns true)",
+   "source": "inferred",
+   "confidence": "medium",
+   "uncertain": true
+  },
+  {
+   "class": "activation",
+   "object": "io_kiocb",
+   "field_ref": "io_kiocb.flags",
+   "relation": "(flags & IO_REQ_LINK_FLAGS) != 0",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 3361,
+  "completion_tokens": 4207,
+  "total_tokens": 7568,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 3979
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 3361
+ }
+}

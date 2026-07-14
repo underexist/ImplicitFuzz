@@ -1,0 +1,43 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_io_uring.pre.bc",
+  "function": "io_file_get_fixed",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "activation",
+   "object": "int",
+   "field_ref": "fd",
+   "relation": "ge",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "premise",
+   "object": "io_ring_ctx",
+   "field_ref": "ctx->nr_user_files",
+   "relation": "le",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "_parse_ok": true,
+ "_model": "deepseek-v4-flash",
+ "_usage": {
+  "prompt_tokens": 5874,
+  "completion_tokens": 2478,
+  "total_tokens": 8352,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 2294
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 5874
+ }
+}

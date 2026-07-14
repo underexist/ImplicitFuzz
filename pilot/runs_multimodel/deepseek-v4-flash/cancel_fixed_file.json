@@ -1,0 +1,44 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_cancel.pre.bc",
+  "function": "io_sync_cancel",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "fd",
+   "field_ref": "",
+   "relation": ">=",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "premise",
+   "object": "io_ring_ctx",
+   "field_ref": "nr_user_files",
+   "relation": "",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-flash",
+ "_usage": {
+  "prompt_tokens": 7244,
+  "completion_tokens": 3309,
+  "total_tokens": 10553,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 3123
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 7244
+ }
+}

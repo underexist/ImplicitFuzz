@@ -1,0 +1,63 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_cancel.pre.bc",
+  "function": "io_sync_cancel",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "activation",
+   "object": "cd",
+   "field_ref": "io_cancel_data.flags",
+   "relation": "& IORING_ASYNC_CANCEL_FD",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "cd",
+   "field_ref": "io_cancel_data.flags",
+   "relation": "& IORING_ASYNC_CANCEL_FD_FIXED",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "param_align",
+   "object": "cd",
+   "field_ref": "io_cancel_data.ctx",
+   "relation": "==",
+   "align_target": "ctx",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "premise",
+   "object": "ctx",
+   "field_ref": "io_ring_ctx.nr_user_files",
+   "relation": "<= fd",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 2945,
+  "completion_tokens": 4147,
+  "total_tokens": 7092,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 3796
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 2945
+ }
+}

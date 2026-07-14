@@ -1,0 +1,383 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_io_uring.pre.bc",
+  "function": "io_prep_async_work",
+  "branch_instruction_id": ""
+ },
+ "field_clues": [
+  "req->flags"
+ ],
+ "code_slices": [
+  {
+   "label": "gate: req->flags & REQ_F_LINK_TIMEOUT",
+   "file_line": "io_uring/io_uring.c:437",
+   "text": "422: \t\treq->flags |= io_file_get_flags(req->file) << REQ_F_SUPPORT_NOWAIT_BIT;\n423: \n424: \tif (req->flags & REQ_F_ISREG) {\n425: \t\tif (def->hash_reg_file || (ctx->flags & IORING_SETUP_IOPOLL))\n426: \t\t\tio_wq_hash_work(&req->work, file_inode(req->file));\n427: \t} else if (!req->file || !S_ISBLK(file_inode(req->file)->i_mode)) {\n428: \t\tif (def->unbound_nonreg_file)\n429: \t\t\treq->work.flags |= IO_WQ_WORK_UNBOUND;\n430: \t}\n431: }\n432: \n433: static void io_prep_async_link(struct io_kiocb *req)\n434: {\n435: \tstruct io_kiocb *cur;\n436: \n437: \tif (req->flags & REQ_F_LINK_TIMEOUT) {\n438: \t\tstruct io_ring_ctx *ctx = req->ctx;\n439: \n440: \t\tspin_lock_irq(&ctx->timeout_lock);\n441: \t\tio_for_each_link(cur, req)\n442: \t\t\tio_prep_async_work(cur);\n443: \t\tspin_unlock_irq(&ctx->timeout_lock);\n444: \t} else {\n445: \t\tio_for_each_link(cur, req)\n446: \t\t\tio_prep_async_work(cur);\n447: \t}\n448: }\n449: \n450: void io_queue_iowq(struct io_kiocb *req, bool *dont_use)\n451: {\n452: \tstruct io_kiocb *link = io_prep_linked_timeout(req);"
+  }
+ ],
+ "ledger": [
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.opcode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.ctx",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[88]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[1792]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[160]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.creds",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[192]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.work",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[200]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[208]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[132]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[212]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[208]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_inode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_mapping",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[216]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_op",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.private_data",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[200]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "block_device.bd_queue",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[840]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[104]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_op",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[40]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[64]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_mode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "block_device.bd_queue",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[840]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[104]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": "io_kiocb.flags",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[68]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": "[0]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "io_op_def.issue",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[24]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_inode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": "file.f_inode",
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[32]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "whole_object",
+   "access_path_numeric": null
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "unknown",
+   "access_path_numeric": "[0]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "read",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[208]"
+  },
+  {
+   "function": "io_prep_async_work",
+   "semantic_op": "write",
+   "access_path_symbolic": null,
+   "numeric_kind": "gep_offsets",
+   "access_path_numeric": "[208]"
+  }
+ ],
+ "instructions": "You are a constrained judge. Using ONLY the code slice and the access-fact ledger below, infer the state-gate predicate for reaching the target branch. Output JSON conforming to predicate_schema. Classify each term as premise / activation / param_align; tag its object; put the referenced field in field_ref as '<struct>.<member>'. Do NOT reference fields absent from the slice/ledger. You may abstain or give alt_candidates if unsure.",
+ "predicate_schema": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://implicitfuzz.local/pilot/predicate_schema.json",
+  "type": "object",
+  "properties": {
+   "target_gate": {
+    "type": "object",
+    "properties": {
+     "bc_unit": {
+      "type": "string"
+     },
+     "function": {
+      "type": "string"
+     },
+     "branch_instruction_id": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "function"
+    ]
+   },
+   "terms": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "class": {
+       "enum": [
+        "premise",
+        "activation",
+        "param_align"
+       ]
+      },
+      "object": {
+       "type": "string"
+      },
+      "field_ref": {
+       "type": "string"
+      },
+      "relation": {
+       "type": "string"
+      },
+      "align_target": {
+       "type": "string"
+      },
+      "source": {
+       "enum": [
+        "slice",
+        "slice+ledger",
+        "inferred"
+       ]
+      },
+      "confidence": {
+       "enum": [
+        "high",
+        "medium_high",
+        "medium",
+        "medium_low",
+        "low"
+       ]
+      },
+      "uncertain": {
+       "type": "boolean"
+      }
+     },
+     "required": [
+      "class",
+      "object",
+      "field_ref",
+      "relation",
+      "source",
+      "confidence",
+      "uncertain"
+     ]
+    }
+   },
+   "abstain": {
+    "type": "boolean"
+   },
+   "alt_candidates": {
+    "type": "array"
+   }
+  },
+  "required": [
+   "target_gate",
+   "terms",
+   "abstain"
+  ]
+ }
+}

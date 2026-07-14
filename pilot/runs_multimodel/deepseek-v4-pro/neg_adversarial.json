@@ -1,0 +1,46 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_net.pre.bc",
+  "function": "io_send_zc_prep",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "zc",
+   "field_ref": "io_sr_msg.flags",
+   "relation": "&",
+   "align_target": "IORING_RECVSEND_FIXED_BUF",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  },
+  {
+   "class": "activation",
+   "object": "idx",
+   "field_ref": "io_uring_sqe.buf_index",
+   "relation": ">=",
+   "align_target": "io_ring_ctx.nr_user_bufs",
+   "source": "slice+ledger",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 7128,
+  "completion_tokens": 5230,
+  "total_tokens": 12358,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 4995
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 7128
+ }
+}

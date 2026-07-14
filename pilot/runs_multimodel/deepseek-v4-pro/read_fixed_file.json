@@ -1,0 +1,36 @@
+{
+ "target_gate": {
+  "bc_unit": "io_uring_io_uring.pre.bc",
+  "function": "io_file_get_fixed",
+  "branch_instruction_id": ""
+ },
+ "terms": [
+  {
+   "class": "premise",
+   "object": "fd",
+   "field_ref": "fd",
+   "relation": ">=",
+   "align_target": "io_ring_ctx.nr_user_files",
+   "source": "slice",
+   "confidence": "high",
+   "uncertain": false
+  }
+ ],
+ "abstain": false,
+ "alt_candidates": [],
+ "_parse_ok": true,
+ "_model": "deepseek-v4-pro",
+ "_usage": {
+  "prompt_tokens": 5874,
+  "completion_tokens": 4791,
+  "total_tokens": 10665,
+  "prompt_tokens_details": {
+   "cached_tokens": 0
+  },
+  "completion_tokens_details": {
+   "reasoning_tokens": 4648
+  },
+  "prompt_cache_hit_tokens": 0,
+  "prompt_cache_miss_tokens": 5874
+ }
+}
